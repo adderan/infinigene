@@ -1,0 +1,162 @@
+'com.boilerbay.genomics' {
+    'count_bases' query {
+        Where {
+            'in' kind 'request content';
+            'num_bases' {
+                kind 'counter';
+                last true;
+            }
+            'out' kind 'response content';
+        }
+        pattern {
+            Genome =genome Chromosome =chromosome Position =position =num_bases;
+            =in {
+                chromosome =chromosome;
+                genome =genome;
+            }
+        }
+        result =out num_bases =num_bases;
+    }
+    'get_gc_content' query {
+        Where {
+            'a_chromosome' last true;
+            'a_counter' {
+                kind 'counter';
+                last true;
+            }
+            'a_position' last true;
+            'c_chromosome' last true;
+            'c_counter' {
+                kind 'counter';
+                last true;
+            }
+            'c_position' last true;
+            'g_chromosome' last true;
+            'g_counter' {
+                kind 'counter';
+                last true;
+            }
+            'g_position' last true;
+            'genome' last true;
+            'in' kind 'request content';
+            'out' kind 'response content';
+            't_chromosome' last true;
+            't_counter' {
+                kind 'counter';
+                last true;
+            }
+            't_position' last true;
+        }
+        pattern {
+            Genome =genome Chromosome {
+                =a_chromosome Position =a_position base 'A' =a_counter;
+                =c_chromosome Position =c_position base 'C' =c_counter;
+                =g_chromosome Position =g_position base 'G' =g_counter;
+                =t_chromosome Position =t_position base 'T' =t_counter;
+            }
+            =in {
+                chromosome =chromosome;
+                end =end;
+                genome =genome;
+                start =start;
+            }
+        }
+        result =out {
+            a_count =a_counter;
+            c_count =c_counter;
+            g_count =g_counter;
+            t_count =t_counter;
+        }
+    }
+    'get_gc_content_from_index' query {
+        Where {
+            'a_count' {
+                kind 'counter';
+                last true;
+            }
+            'c_count' {
+                kind 'counter';
+                last true;
+            }
+            'g_count' {
+                kind 'counter';
+                last true;
+            }
+            'in' kind 'request content';
+            'out' kind 'response content';
+            't_count' {
+                kind 'counter';
+                last true;
+            }
+        }
+        pattern Base {
+            'A' position =a_genome =a_chromosome =a_position =a_count;
+            'C' position =c_genome =c_chromosome =c_position =c_count;
+            'G' position =g_genome =g_chromosome =g_position =g_count;
+            'T' position =t_genome =t_chromosome =t_position =t_count;
+        }
+        result =out {
+            a_count =a_count;
+            c_count =c_count;
+            g_count =g_count;
+            t_count =t_count;
+        }
+    }
+    'make_base_index' query {
+        pattern Genome =genome Chromosome =chromosome Position =position base =base;
+        result Base =base position =genome =chromosome =position;
+    }
+    'set_base' query {
+        Where {
+            'base' {
+                type 'string';
+                values 1;
+            }
+            'chromosome' {
+                type 'string';
+                values 1;
+            }
+            'genome_id' {
+                type 'string';
+                values 1;
+            }
+            'in' kind 'request content';
+            'position' values 1;
+        }
+        pattern =in {
+            base =base;
+            chromosome =chromosome;
+            genome_id =genome_id;
+            position =position;
+        }
+        result Genome =genome_id Chromosome =chromosome Position =position base =base;
+    }
+    'set_bases' query {
+        Where {
+            'bases' type 'string';
+            'chromosome' {
+                type 'string';
+                values 1;
+            }
+            'genome' {
+                type 'string';
+                values 1;
+            }
+            'in' kind 'request content';
+            'length' type int;
+            'position' {
+                kind 'counter';
+                type int;
+            }
+            'start' type int;
+        }
+        pattern =in {
+            bases =bases;
+            chromosome =chromosome;
+            genome =genome;
+            length =length;
+            position =position;
+        }
+        result Genome =genome Chromosome =chromosome Position =start base =bases;
+    }
+}
