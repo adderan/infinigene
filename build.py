@@ -3,7 +3,7 @@ import os
 import sys
 
 from Bio import SeqIO
-import intelliwaterai.infinitydb.access as idb
+import access as idb
 
 INTERFACE = "com.boilerbay.genomics"
 
