@@ -1,6 +1,6 @@
 import unittest
 from build import make_parser
-import access as idb
+import intelliwaterai.infinitydb.access as idb
 from build import INTERFACE
 
 GENOME = idb.Attribute("genome")
@@ -29,5 +29,4 @@ class QueryTests(unittest.TestCase):
         self.server.execute_query(
             prefix = [INTERFACE, "set_base"],
             data = data,
-            unflatten=False
         )
