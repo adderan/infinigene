@@ -11,11 +11,12 @@ BASE = idb.Attribute("base")
 class QueryTests(unittest.TestCase):
     def setUp(self):
         self.server = idb.InfinityDBAccessor(
-            server_url = "https://localhost:37411/infinitydb/data",
+            server_url = "https://24.6.93.122:37411/infinitydb/data",
             db = "boilerbay/genomics",
             user = "ai",
             password = "ai"
         )
+        self.server.is_verification_enabled = False
 
 
 
