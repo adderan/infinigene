@@ -1,17 +1,14 @@
 import unittest
 from build import make_parser
 import intelliwaterai.infinitydb.access as idb
-from build import INTERFACE
+from queries import INTERFACE, GENOME, CHROMOSOME, POSITION, BASE
 
-GENOME = idb.Attribute("genome")
-CHROMOSOME = idb.Attribute("chromosome")
-POSITION = idb.Attribute("position")
-BASE = idb.Attribute("base")
+
 
 class QueryTests(unittest.TestCase):
     def setUp(self):
         self.server = idb.InfinityDBAccessor(
-            server_url = "https://24.6.93.122:37411/infinitydb/data",
+            server_url = "https://localhost:37411/infinitydb/data",
             db = "boilerbay/genomics",
             user = "ai",
             password = "ai"
