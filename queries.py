@@ -38,6 +38,18 @@ def get_sequence(server, genome, chromosome, start, end):
     sequence = [idb.flatten_to_tuple(x)[0] for x in response]
     return "".join(sequence)
 
+def get_gene_sequence(server, gene_id):
+    success, response, response_content_type = server.execute_query(
+        prefix=[INTERFACE, "get_gene_sequence"],
+        data = {
+            idb.Attribute("gene_id"): gene_id
+        }
+    )
+    response = response[idb.Attribute('transcript')]
+    sequences = {transcript:"".join([idb.flatten_to_tuple(x)[0] for x in response[transcript]]) for transcript in response}
+
+    return sequences
+
 def count_bases(server, genome, chromosome):
 
     success, response, response_content_type = server.execute_query(
@@ -80,6 +92,7 @@ if __name__ == "__main__":
     parser.add_argument("--chromosome", type=str, default=None)
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=0)
+    parser.add_argument("--gene_id", type=str, default=None)
     args = parser.parse_args()
     server = idb.InfinityDBAccessor(server_url=args.server, db=args.database, user=args.user, password=args.password)
     server.is_verification_enabled = False
@@ -91,6 +104,9 @@ if __name__ == "__main__":
             genome=args.genome, 
             chromosome=args.chromosome, 
             start=args.start, 
-            end=args.end)
-        )
+            end=args.end
+        ))
+
+    elif args.query == "get_gene_sequence":
+        print(get_gene_sequence(server, args.gene_id))
     
