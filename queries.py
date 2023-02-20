@@ -24,8 +24,6 @@ def make_parser():
     parser.add_argument("--password", type=str, default="ai")
     return parser
 
-def add_gene():
-    pass
 
 def get_sequence(server, genome, chromosome, start, end):
     success, response, response_content_type = server.execute_query(
