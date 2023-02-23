@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Boilerbay Genome Visualizer</title>
+        <style type="text/css">
+            canvas {
+                border: 1px solid black;
+            }
+            header {
+                background-color: #666;
+                text-align: center;
+                color: white;
+                margin: 5px 5px;
+                padding: 1px;
+            }
+            nav {
+                background-color:rgba(37, 129, 204, 0.459);
+            }
+            nav ul {
+                list-style-type: none;
+                overflow: hidden;
+
+            }
+            nav li {
+                float: left;
+            }
+            nav li a {
+                display: block;
+                text-align: center;
+                text-decoration: none;
+                padding: 14px 16px;
+            }
+            nav li a:hover {
+                background-color:rgba(9, 139, 245, 0.808)
+            }
+        </style>
+
+        <!--link rel="icon" href="figure_40_cyanobacteria_dolichospermum_circinale_usgs_ofr20151164_ann_st_amand_l.webp" type="image/x-icon"-->
+    </head>
+    <body>
+        <header><h1>Genome Visualizer</h1></header>
+        <nav>
+            <ul>
+                <li><a href="">Home</a></li>
+                <li><a href="">About</a></li>
+            </ul>
+        </nav>
+
+        <canvas id="graph" width="900" height="600">
+        </canvas>
+
+        <script src="genome_browser.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+    </body>
+</html>
