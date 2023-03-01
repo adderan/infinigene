@@ -1,6 +1,6 @@
 import intelliwaterai.infinitydb.access as idb
 from queries import get_sequence
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for
 
 server = idb.InfinityDBAccessor("https://24.6.93.122:37411/infinitydb/data", db="boilerbay/genomics", user="ai", password="ai")
 server.is_verification_enabled = False
