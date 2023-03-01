@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>Boilerbay Genome Visualizer</title>
+        <!--title>Boilerbay Genome Visualizer</title-->
         <style type="text/css">
             canvas {
                 border: 1px solid black;
@@ -39,7 +39,7 @@
         <!--link rel="icon" href="figure_40_cyanobacteria_dolichospermum_circinale_usgs_ofr20151164_ann_st_amand_l.webp" type="image/x-icon"-->
     </head>
     <body>
-        <header><h1>Genome Visualizer</h1></header>
+        <header><!--h1>Genome Visualizer</h1--></header>
         <nav>
             <ul>
                 <li><a href="">Home</a></li>
@@ -47,21 +47,21 @@
             </ul>
         </nav>
 
-        <canvas id="canvas" width="900" height="600" style="margin-left:auto;margin-right:auto"></canvas>
 
-        <form method="post">
+        <div>
             <label>Coordinates:
-              <input name="coordinates" autocomplete="chr1" />
+                <input name="coordinates" autocomplete="chr1" />
             </label>
-            <button>Go</button>
-          </form>
+            <button id="go">Go</button>
+        </div>
+
+        <canvas id="canvas" width="800" height="600" style="padding-top:10px;"></canvas>
 
         <!--p style="color:rgb(0, 17, 255);text-align:center;">{{ seq }}</p-->
         <script>
-            const SCRIPT_ROOT = {{request.script_root|tojson}}
+            const SCRIPT_ROOT = {{ request.script_root | tojson }};
         </script>
         <script src="{{ url_for('static', filename='genome_browser.js') }}"></script>
 
-        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
     </body>
 </html>
