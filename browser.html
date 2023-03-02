@@ -58,10 +58,7 @@
         <canvas id="canvas" width="800" height="600" style="padding-top:10px;"></canvas>
 
         <!--p style="color:rgb(0, 17, 255);text-align:center;">{{ seq }}</p-->
-        <script>
-            const SCRIPT_ROOT = {{ request.script_root | tojson }};
-        </script>
-        <script src="{{ url_for('static', filename='genome_browser.js') }}"></script>
+        <script src="browser.js"></script>
 
     </body>
 </html>
