@@ -11,19 +11,25 @@ class IdbAccessor {
         this.auth = btoa(this.username + ":" + this.password)
 
     }
+
     
     do_query(prefix, data) {
         let headers = new Headers()
         headers.append('Authorization', "Basic " + this.auth)
         headers.append("Content-Type", "application/json");
 
-        let query_url = this.db_url + '/' + prefix.join('/')
+        let escaped_data = {};
+        for (let key in data) {
+            let escaped_key = "_" + key
+            escaped_data[escaped_key] = data[key]
+        }
+
+        let query_url = this.db_url + '/' + encodeURIComponent(prefix.join('/'))
         const request = new Request(query_url,
             {
                 headers: headers,
                 method: "POST",
-                body: JSON.stringify(data),
-                credentials: "include"
+                body: JSON.stringify(escaped_data),
             })
 
         return fetch(request);
@@ -36,8 +42,7 @@ class IdbAccessor {
         const request = new Request(this.db_url,
             {
                 headers: headers,
-                method: "HEAD",
-                credentials: "include"
+                method: "HEAD"
             });
 
         fetch(request).then((response) => console.log("head: " + response));
@@ -56,7 +61,7 @@ server.do_query(["com.infinitydb.ai", "get_first_image_id"],
 )
 */
 
-server = new IdbAccessor("https://localhost:37411/infinitydb/data", "boilerbay/genomics", "ai", "ai")
+server = new IdbAccessor("https://24.6.93.122:37411/infinitydb/data", "boilerbay/genomics", "ai", "ai")
 server.head()
 
 
@@ -67,4 +72,4 @@ server.do_query(["com.boilerbay.genomics", "get_sequence"],
         "start": 1000000,
         "end": 1000100
     }
-);
+).then(response => response.text()).then(response => console.log(response))
