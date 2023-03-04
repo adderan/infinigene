@@ -84,6 +84,42 @@ def get_last_position(server, genome, chromosome):
         return None
     return list(response[idb.Attribute("last_position")].keys())[0]
 
+def get_gene(server, gene_id):
+    success, response, response_content_type = server.execute_query(
+        prefix=[INTERFACE, "get_gene"],
+        data = {
+            idb.Attribute("gene_id"): gene_id
+        }
+    )
+    if not success:
+        return None
+    return response
+
+def get_transcript(server, transcript_id):
+    success, response, response_content_type = server.execute_query(
+        prefix=[INTERFACE, "get_transcript"],
+        data = {
+            idb.Attribute("transcript_id"): transcript_id
+        }
+    )
+    if not success:
+        return None
+    return response
+
+def get_transcripts_in_range(server, genome, chromosome, start, end):
+    success, response, response_content_type = server.execute_query(
+        prefix=[INTERFACE, "get_transcripts_in_range"],
+        data = {
+            idb.Attribute("genome"): genome,
+            idb.Attribute("chromosome"): chromosome,
+            idb.Attribute("start"): start,
+            idb.Attribute("end"): end
+        }
+    )
+    if not success:
+        return None
+    return response
+
 
 if __name__ == "__main__":
     parser = make_parser()
@@ -93,6 +129,7 @@ if __name__ == "__main__":
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=0)
     parser.add_argument("--gene_id", type=str, default=None)
+    parser.add_argument("--transcript_id", type=str, default=None)
     args = parser.parse_args()
     server = idb.InfinityDBAccessor(server_url=args.server, db=args.database, user=args.user, password=args.password)
     server.is_verification_enabled = False
@@ -109,4 +146,13 @@ if __name__ == "__main__":
 
     elif args.query == "get_gene_sequence":
         print(get_gene_sequence(server, args.gene_id))
+
+    elif args.query == "get_gene":
+        print(get_gene(server, args.gene_id))
+
+    elif args.query == "get_transcript":
+        print(get_transcript(server, args.transcript_id))
+
+    elif args.query == "get_transcripts_in_range":
+        print(get_transcripts_in_range(server, args.genome, args.chromosome, args.start, args.end))
     

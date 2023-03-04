@@ -3,38 +3,7 @@
     <head>
         <meta charset="utf-8">
         <!--title>Boilerbay Genome Visualizer</title-->
-        <style type="text/css">
-            canvas {
-                border: 1px solid black;
-            }
-            header {
-                background-color: #666;
-                text-align: center;
-                color: white;
-                margin: 5px 5px;
-                padding: 1px;
-            }
-            nav {
-                background-color:rgba(37, 129, 204, 0.459);
-            }
-            nav ul {
-                list-style-type: none;
-                overflow: hidden;
-
-            }
-            nav li {
-                float: left;
-            }
-            nav li a {
-                display: block;
-                text-align: center;
-                text-decoration: none;
-                padding: 14px 16px;
-            }
-            nav li a:hover {
-                background-color:rgba(9, 139, 245, 0.808)
-            }
-        </style>
+        <link rel="stylesheet" type="text/css" href="browser.css">
 
         <!--link rel="icon" href="figure_40_cyanobacteria_dolichospermum_circinale_usgs_ofr20151164_ann_st_amand_l.webp" type="image/x-icon"-->
     </head>
@@ -44,20 +13,42 @@
             <ul>
                 <li><a href="">Home</a></li>
                 <li><a href="">About</a></li>
+                <li><label id="connection_status">Not logged in.</label></li>
+                <li><button id="login" class="login-button" onclick="document.getElementById('loginpane').style.display='block'">Login</button></li>
             </ul>
+
         </nav>
 
+        <div id="loginpane" class="modal">
+            <div class="modal-content animate">
+                <label>Server:
+                    <input class="modal-input" id="server_url" autocomplete="https://localhost:37411"/>
+                </label>
+                <label>User
+                    <input id="username" class="modal-input">
+                </label>
+                <label>Password
+                    <input id="password" type="password" class="modal-input">
+                </label>
+                <button class="modal-button" id="connect" onclick="connect_server()">Connect</button>
+                <button class="modal-button cancelbtn" id="cancel" onclick="document.getElementById('loginpane').style.display='none'">Cancel</button>
+            </div>
+        </div>
 
         <div>
             <label>Coordinates:
-                <input name="coordinates" autocomplete="chr1" />
+                <input id="coordinates" autocomplete="chr1" />
             </label>
-            <button id="go">Go</button>
+            <label>View Width: 
+                <input id="view_width" autocomplete="10000" />
+            </label>
+            <button id="go" onclick="go_to_position()">Go</button>
         </div>
 
         <canvas id="canvas" width="800" height="600" style="padding-top:10px;"></canvas>
 
         <!--p style="color:rgb(0, 17, 255);text-align:center;">{{ seq }}</p-->
+        <script src="intelliwaterai/infinitydb/access.js"></script>
         <script src="browser.js"></script>
 
     </body>
