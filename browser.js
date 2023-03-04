@@ -14,34 +14,38 @@ class IdbAccessor {
 
     
     do_query(prefix, data) {
-        let headers = new Headers()
-        headers.append('Authorization', "Basic " + this.auth)
-        headers.append("Content-Type", "application/json");
-
         let escaped_data = {};
         for (let key in data) {
-            let escaped_key = "_" + key
-            escaped_data[escaped_key] = data[key]
+            let escaped_key = "_" + key;
+            escaped_data[escaped_key] = data[key];
         }
 
-        let query_url = this.db_url + '/' + encodeURIComponent(prefix.join('/'))
+        prefix = prefix.map(x => `\"${x}\"`)
+        prefix = prefix.map(encodeURIComponent).join("/");
+
+        let query_url = new URL(this.db_url + '/' + prefix);
+        query_url.searchParams.append("action", "execute-query");
+
         const request = new Request(query_url,
             {
-                headers: headers,
+                headers: {
+                    "Authorization": "Basic " + this.auth,
+                    "Content-Type": "application/json"
+                },
                 method: "POST",
                 body: JSON.stringify(escaped_data),
             })
+        
 
         return fetch(request);
     }
 
     head() {
-        let headers = new Headers()
-        headers.append('Authorization', "Basic " + this.auth)
-
         const request = new Request(this.db_url,
             {
-                headers: headers,
+                headers: {
+                    "Authorization": "Basic " + this.auth
+                },
                 method: "HEAD"
             });
 
@@ -50,22 +54,11 @@ class IdbAccessor {
 
 }
 
-/*
-server = new IdbAccessor("https://infinitydb.com:37411/infinitydb/data", "ai/labels", "ai", "ai")
-server.head()
-
-server.do_query(["com.infinitydb.ai", "get_first_image_id"],
-    data = {
-        "image_set": "chlorella"
-    }
-)
-*/
-
-server = new IdbAccessor("https://24.6.93.122:37411/infinitydb/data", "boilerbay/genomics", "ai", "ai")
+server = new IdbAccessor("https://localhost:37411/infinitydb/data", "boilerbay/genomics", "ai", "ai")
 server.head()
 
 
-server.do_query(["com.boilerbay.genomics", "get_sequence"], 
+response = server.do_query(["com.boilerbay.genomics", "get_sequence"], 
     data={
         "genome": "grch38",
         "chromosome": "chr1",
