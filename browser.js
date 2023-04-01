@@ -1,6 +1,13 @@
 var server = null;
 var browser = null;
 const INTERFACE = "com.boilerbay.genomics"
+
+class Axis {
+    constructor(canvas) {
+
+    }
+}
+
 class Browser {
     constructor(canvas) {
         this.canvas = canvas;
@@ -13,7 +20,7 @@ class Browser {
         this.transcript_label_offset = 40;
         this.axis_y_offset = 6;
         this.axis_thickness = 2;
-        this.axis_tick_height = 12;
+        this.axis_tick_height = 16;
 
         this.color_codes = {
             "start_codon": "red",
@@ -41,15 +48,46 @@ class Browser {
             this.canvas.width,
             this.axis_thickness);
 
+        this.draw_axis_tick(this.canvas.width/4);
+        this.draw_axis_tick(this.canvas.width/2);
+        this.draw_axis_tick(this.canvas.width*0.75);
+        this.draw_axis_tick(0);
+        this.draw_axis_tick(this.canvas.width);
+        
+    }
+
+    draw_axis_tick(x) {
+        let x0 = this.from_screen_coordinates(x);
+        let ctx = this.canvas.getContext("2d");
         ctx.fillRect(
-            this.canvas.width/2, 
+            x, 
             this.axis_y_offset - this.axis_tick_height/2, 
             this.axis_thickness, 
             this.axis_tick_height);
 
-        ctx.font = "12px sans bold";
-        ctx.fillText()
 
+        let units = "bp";
+        if (x0 > 1e6) {
+            x0 = x0/1e6;
+            units = "Mb";
+        }
+        else if (x0 > 1e3) {
+            x0 = x0/1e3;
+            units = "Kb";
+        }
+        let label = `${x0} ${units}`;
+
+        ctx.font = "15px sans bold";
+        let label_x_pos = Math.max(0, x-20); //prevent label going off left edge
+        label_x_pos = Math.min(label_x_pos, this.canvas.width-50); //prevent label going off right edge
+        ctx.fillText(label, label_x_pos, this.axis_y_offset + this.axis_tick_height+4);
+
+    }
+
+
+    from_screen_coordinates(x) {
+        let scale = this.view_width / this.canvas.width;
+        return x * scale + this.position;
     }
 
     to_screen_coordinates(x0) {
@@ -64,8 +102,8 @@ class Browser {
         this.view_width = view_width;
     }
 
-    async update_tracks(transcript_ids) {
-        transcript_ids = await get_transcripts_in_range(
+    async update_tracks() {
+        let transcript_ids = await get_transcripts_in_range(
                 this.genome, 
                 this.chromosome, 
                 this.position, 
@@ -80,6 +118,7 @@ class Browser {
             this.transcripts[transcript_id] = transcript;
             this.refresh_canvas();
         }
+        this.last_track_refresh = Date.now();
     }
 
     draw_transcript(transcript_id, draw_level) {
@@ -118,6 +157,9 @@ class Browser {
     }
 
     refresh_canvas() {
+        if (Date.now() - this.last_track_refresh > 500) {
+            this.update_tracks();
+        }
         let ctx = this.canvas.getContext("2d");
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         let level = 100;
@@ -354,6 +396,10 @@ canvas.onmouseup = function(event) {
     browser.update_tracks();
     browser.refresh_canvas();
 
+}
+canvas.onwheel = function(event) {
+    browser.move(event.deltaX);
+    browser.refresh_canvas();
 }
 
 window.onresize = function() {
