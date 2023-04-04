@@ -33,7 +33,7 @@ if __name__ == "__main__":
         gene_name = gtf[i,"gene_name"]
         chromosome = gtf[i, "seqname"]
         gene_set = gtf[i, "source"]
-        gene_type = gtf[i, "feature"]
+        feature = gtf[i, "feature"]
         start = gtf[i, "start"]
         end = gtf[i, "end"]
         strand = gtf[i, "strand"]
@@ -46,9 +46,9 @@ if __name__ == "__main__":
             print(chromosome)
             print("Uploading gene", i, "of", num_genes)
 
-        if gene_type == "transcript":
+        if feature == "transcript":
             success, response, response_content_type = server.execute_query(
-                prefix=[INTERFACE, "set_gene"],
+                prefix=[INTERFACE, "set_transcript"],
                 data = {
                     idb.Attribute("genome"): args.genome,
                     idb.Attribute("chromosome"): chromosome,
@@ -67,11 +67,9 @@ if __name__ == "__main__":
                 data = {
                     idb.Attribute("genome"): args.genome,
                     idb.Attribute("chromosome"): chromosome,
-                    idb.Attribute("gene_set"): args.gene_set,
-                    idb.Attribute("gene_id"): gene_id,
                     idb.Attribute("transcript_id"): transcript_id,
                     idb.Attribute("exon_id"): exon_id,
-                    idb.Attribute("gene_type"): gene_type,
+                    idb.Attribute("feature"): feature,
                     idb.Attribute("start"): int(start),
                     idb.Attribute("end"): int(end),
                     idb.Attribute("strand"): strand
