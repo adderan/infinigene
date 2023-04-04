@@ -51,7 +51,7 @@ class Browser {
         if (exon == null) {
             return;
         }
-        this.refresh_canvas();
+        //this.refresh_canvas();
         var ctx = this.canvas.getContext("2d");
         ctx.beginPath();
         let x_offset = 10;
@@ -214,7 +214,8 @@ class Browser {
 
         ctx.font = "20px Sans Bold";
         ctx.fillStyle = "black";
-        ctx.fillText(transcript_id, start+this.transcript_label_offset, draw_level - 20);
+        let transcript_label = `${transcript.gene}`;
+        ctx.fillText(transcript_label, start+this.transcript_label_offset, draw_level - 20);
 
     }
 
@@ -355,14 +356,25 @@ set_disconnected_status = function() {
     document.getElementById("connection_status").innerHTML = "Must login first."
 }
 
-get_transcript = async function(server, transcript_id) {
-    response = await server.do_query([INTERFACE, "get_transcript"],
-        data = {"transcript_id": transcript_id
-
-        }
-    )
+get_transcripts_in_gene = async function(server, gene) {
+    let response = await server.do_query(
+            [INTERFACE, "get_transcripts_in_gene"], 
+            {"gene": gene}
+    );
+    if (response == null) return null;
     response = await response.json();
+    let transcript_ids = Object.keys(response);
+    return transcript_ids;
+}
 
+get_transcript = async function(server, transcript_id) {
+    let response = await server.do_query(
+        [INTERFACE, "get_transcript"],
+        {"transcript_id": transcript_id}
+    );
+
+    if (response == null || response.status != 200) return null;
+    response = await response.json();
     exons = {};
     for ([exon_id, exon] of Object.entries(response["_exons"])) {
         exon = flatten_to_list(exon);
@@ -380,6 +392,8 @@ get_transcript = async function(server, transcript_id) {
         chromosome: response["_chromosome"],
         start: parseInt(response["_start"].slice(1)),
         end: parseInt(response["_end"].slice(1)),
+        genome: response["_genome"],
+        gene: response["_gene"],
         exons: exons
     };
     
@@ -387,7 +401,7 @@ get_transcript = async function(server, transcript_id) {
 }
 
 get_transcripts_in_range = async function(genome, chromosome, start, end) {
-    response = await server.do_query([INTERFACE, "get_transcripts_in_range"],
+    let response = await server.do_query([INTERFACE, "get_transcripts_in_range"],
         data = {
             "genome": genome,
             "chromosome": chromosome,
@@ -395,39 +409,55 @@ get_transcripts_in_range = async function(genome, chromosome, start, end) {
             "end": end
         }
     );
+    if (response == null || response.status != 200) {
+        return null;
+    }
     response = await response.json();
     transcript_ids = Object.keys(response);
     return transcript_ids;
     
 }
 
+
 go_to_position = async function() {
     if (server == null) {
         set_disconnected_status();
         return;
     }
-    const display_length = 20;
     let coordinates_field = document.getElementById("coordinates");
     const coords_exp = /^([a-zA-Z0-9]+):([a-zA-Z0-9]+):([0-9]+)$/;
     const coords = coordinates_field.value.match(coords_exp)
-    if (coords == null) {
-        alert("Invalid coordinates");
+    let genome, chromosome, position;
+    if (coords) {
+        genome = coords[1];
+        chromosome = coords[2];
+        position = parseInt(coords[3]);
+    }
+
+    if (genome == null) {
+        let transcript = await get_transcript(server, coordinates_field.value);
+        if (transcript) {
+            genome = transcript.genome;
+            chromosome = transcript.chromosome;
+            position = parseInt(transcript.start);
+        }
+    }
+    if (genome == null) {
+        //try to find the gene name
+        let transcripts_in_gene = await get_transcripts_in_gene(server, coordinates_field.value);
+        if (transcripts_in_gene) {
+            transcript = await get_transcript(server, transcripts_in_gene[0]);
+            genome = transcript.genome;
+            chromosome = transcript.chromosome;
+            position = parseInt(transcript.start);
+            
+        }
+
+    }
+    if (genome == null) {
+        alert("Invalid coordinates or gene name.");
         return;
     }
-    genome = coords[1];
-    chromosome = coords[2];
-    position = parseInt(coords[3]);
-
-    response = await server.do_query([INTERFACE, "get_sequence"], 
-        data={
-            "genome": "grch38",
-            "chromosome": chromosome,
-            "start": position - display_length,
-            "end": position + display_length
-        }
-    );
-    let seq = await response.json();
-    seq = seq.join(" ");
 
 
     let view_width_field = document.getElementById("view_width");
@@ -476,6 +506,7 @@ canvas.onmouseup = function(event) {
     //let coordinatesField = getElementById("coordinates");
     //coordinatesField.value = `${browser.genome}:${browser.chromosome}:${browser.position}`;
     browser.refresh_canvas();
+    console.log("Mouse up");
 
 }
 canvas.onwheel = function(event) {
