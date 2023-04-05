@@ -7,6 +7,18 @@ class Axis {
     }
 }
 
+class Track {
+
+}
+
+class TranscriptTrack extends Track {
+    draw() {
+
+    }
+
+}
+
+
 class Browser {
     constructor(canvas) {
         /** @type {HTMLCanvasElement} */
@@ -52,7 +64,7 @@ class Browser {
         else if (event.type == "click") {
             this.current_tooltip = null;
             this.refresh_canvas();
-            this.draw_tooltip(event.offsetX, event.offsetY - 12);
+            this.draw_tooltip(event.offsetX, event.offsetY);
         }
         else if (event.type == 'mousedown') {
             this.canvas.addEventListener('mousemove', this);
@@ -118,6 +130,14 @@ class Browser {
         ctx.fillText(`ID: ${exon.exon_id}`, xpos, vpos);
         vpos += 20;
         ctx.fillText(`Feature: ${exon.feature}`, xpos, vpos);
+
+    }
+
+    get_selected_gene_sets() {
+        let gene_sets_div = document.getElementById('gene_sets');
+        for (let i = 0; i < gene_sets_div.childNodes.length; i++) {
+            console.log(gene_sets_div.childNodes[i].childNodes.length);
+        }
 
     }
 
@@ -266,6 +286,8 @@ class Browser {
         let ctx = this.canvas.getContext("2d");
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+        this.get_selected_gene_sets();
+
         this.on_screen_objects = [];
         let level = 100;
 
@@ -300,9 +322,6 @@ class Browser {
 
 }
 
-class Track {
-
-};
 
 class GeneTrack extends Track {
     constructor(gene_name, start, end) {
@@ -540,6 +559,26 @@ var canvas = document.getElementById("canvas")
 
 var browser = new Browser(canvas);
 browser.refresh_canvas();
+
+/*
+let gene_sets = ['Ensembl', 'refGene'];
+let gene_sets_div = document.getElementById('gene_sets');
+for (let gene_set of gene_sets) {
+    let gene_set_div = document.createElement('div');
+    gene_set_div.style = 'display:inline; margin:10px;';
+    let box = document.createElement('input');
+    box.id = `${gene_set}_box`;
+    box.setAttribute('type', 'checkbox');
+    box_label = document.createElement('label');
+    box_label.htmlFor = `${gene_set}_box`;
+    box_label.innerHTML = gene_set;
+    box_label.style = "padding:8px;"
+    box.checked = true;
+    gene_set_div.append(box_label);
+    gene_set_div.append(box);
+    gene_sets_div.append(gene_set_div);
+}
+*/
 
 
 //Window Listeners
