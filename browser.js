@@ -1,6 +1,5 @@
-var server = null;
-var browser = null;
 const INTERFACE = "com.boilerbay.genomics"
+
 
 class Axis {
     constructor(canvas) {
@@ -33,8 +32,49 @@ class Browser {
         };
         this.on_screen_objects = [];
 
+        this.canvas.addEventListener('click', this);
+        this.canvas.addEventListener('wheel', this);
+        this.canvas.addEventListener('mouseup', this);
+        this.canvas.addEventListener('mousedown', this);
+        this.canvas.addEventListener('mouseleave', this);
 
+        this.current_tooltip = null;
 
+    }
+
+    handleEvent(event) {
+        console.log(event.type);
+        if (event.type == 'wheel') {
+            if (event.deltaX == 0) return;
+            browser.move(-1*event.deltaX);
+            browser.refresh_canvas();
+        }
+        else if (event.type == "click") {
+            this.current_tooltip = null;
+            this.refresh_canvas();
+            this.draw_tooltip(event.offsetX, event.offsetY - 12);
+        }
+        else if (event.type == 'mousedown') {
+            this.canvas.addEventListener('mousemove', this);
+            this.dragPosition = event.pageX;
+        }
+        else if (event.type == 'mouseup') {
+            this.canvas.removeEventListener('mousemove', this);
+
+        }
+        else if (event.type == 'mousemove') {
+            let deltaX = event.pageX - this.dragPosition;
+            if (deltaX == 0) return;
+            this.move(deltaX);
+            this.dragPosition = event.pageX;
+            this.refresh_canvas();
+        }
+        else if (event.type == 'mouseleave') {
+            this.canvas.removeEventListener('mousemove', this);
+        }
+        else {
+            console.warn(`Unexpected event ${event.type}`);
+        }
     }
     move(offset) {
 
@@ -44,6 +84,8 @@ class Browser {
         if (Date.now() - this.last_track_refresh > 500) {
             this.update_tracks();
         }
+
+        this.current_tooltip = null;
     }
 
     draw_tooltip(x, y) {
@@ -51,7 +93,7 @@ class Browser {
         if (exon == null) {
             return;
         }
-        //this.refresh_canvas();
+        this.current_tooltip = (x, y);
         var ctx = this.canvas.getContext("2d");
         ctx.beginPath();
         let x_offset = 10;
@@ -250,7 +292,11 @@ class Browser {
             this.draw_transcript(transcript_id, level)
             level += 100;
         }
+        if (this.current_tooltip != null) {
+            this.draw_tooltip(this.current_tooltip[0], this.current_tooltip[1]);
+        }
     }
+    
 
 }
 
@@ -484,57 +530,20 @@ function zoom_in() {
     browser.refresh_canvas();
 }
 
-
-
-//Canvas Listeners
-
-var cur_drag_pos = 0;
-function dragCanvas(event) {
-    browser.move(event.pageX - cur_drag_pos);
-    browser.refresh_canvas();
-    cur_drag_pos = event.pageX;
-
-}
-canvas.onmousedown = function(event) {
-    cur_drag_pos = event.pageX;
-    canvas.addEventListener('mousemove', dragCanvas);
-}
-canvas.onmouseup = function(event) {
-    canvas.removeEventListener('mousemove', dragCanvas);
-    browser.update_tracks();
-
-    //let coordinatesField = getElementById("coordinates");
-    //coordinatesField.value = `${browser.genome}:${browser.chromosome}:${browser.position}`;
-    browser.refresh_canvas();
-    console.log("Mouse up");
-
-}
-canvas.onwheel = function(event) {
-    if (event.deltaX == 0) return;
-    browser.move(event.deltaX);
-    browser.refresh_canvas();
-}
-
-function showTooltip(event) {
-    browser.draw_tooltip(event.offsetX, event.offsetY - 12);
-}
-
-canvas.onclick = showTooltip;
-
-//Window Listeners
-
-window.onresize = function() {
-    browser.refresh_canvas();
-}
-
-
-
 if (sessionStorage.getItem('username') != null) {
     server = new IdbAccessor(sessionStorage.getItem('server_url'), 'boilerbay/genomics', sessionStorage.getItem('username'), sessionStorage.getItem('password'));
 }
 set_login_status();
 
 /** @type {HTMLCanvasElement} */
-canvas = document.getElementById("canvas")
+var canvas = document.getElementById("canvas")
 
-browser = new Browser(canvas);
+var browser = new Browser(canvas);
+browser.refresh_canvas();
+
+
+//Window Listeners
+
+window.onresize = function() {
+    browser.refresh_canvas();
+}
