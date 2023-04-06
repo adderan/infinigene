@@ -144,7 +144,6 @@ class Browser {
         for (let box of Object.keys(this.active_gene_set_boxes)) {
             gene_set_selected[box] = this.active_gene_set_boxes[box].checked;
         }
-        console.log(gene_set_selected);
         return gene_set_selected;
     }
 
@@ -222,6 +221,8 @@ class Browser {
     }
 
     async update_tracks() {
+        console.log("Updating tracks from server.")
+        console.log(this.transcripts);
         let transcript_ids = await get_transcripts_in_range(
                 this.genome, 
                 this.chromosome, 
@@ -231,9 +232,10 @@ class Browser {
 
         for (let transcript_id of transcript_ids) {
             if (transcript_id in this.transcripts) {
+                console.log("Skipping downloading transcript");
                 continue;
             }
-            transcript = await get_transcript(server, transcript_id);
+            let transcript = await get_transcript(server, transcript_id);
             this.transcripts[transcript_id] = transcript;
             this.refresh_canvas();
         }
@@ -300,12 +302,15 @@ class Browser {
 
         this.canvas.width = window.innerWidth;
 
-        console.log(this.transcripts);
 
         //Drop out-of-view transcripts and resize canvas in advance, because resizing it will clear
         //it.
         for (let transcript_id of Object.keys(this.transcripts)) {
             let transcript = this.transcripts[transcript_id];
+            if (!transcript) {
+                delete this.transcripts[transcript_id];
+                continue
+            }
             let transcript_screen_end = this.to_screen_coordinates(transcript.end);
             let transcript_screen_start = this.to_screen_coordinates(transcript.start);
             if ((transcript_screen_end < 0) || (transcript_screen_start > this.canvas.width)) {
@@ -587,6 +592,7 @@ window.onload = function() {
         box_label.innerHTML = gene_set;
         box_label.style = "padding:8px;"
         box.checked = true;
+        box.addEventListener('click', () => browser.refresh_canvas());
         gene_set_div.append(box_label);
         gene_set_div.append(box);
         gene_sets_div.append(gene_set_div);
