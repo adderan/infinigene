@@ -18,6 +18,9 @@ class TranscriptTrack extends Track {
 
 }
 
+var browser = null;
+var server = null;
+
 
 class Browser {
     constructor(canvas) {
@@ -51,6 +54,8 @@ class Browser {
         this.canvas.addEventListener('mouseleave', this);
 
         this.current_tooltip = null;
+
+        this.active_gene_set_boxes = {};
 
     }
 
@@ -118,9 +123,10 @@ class Browser {
         }
         const tooltip_x0 = x + x_offset;
         const tooltip_y0 = y + y_offset;
-        ctx.rect(tooltip_x0, tooltip_y0, 200, 100);
-        ctx.fillStyle = "rgba(0, 255, 0, 1.0)";
-        ctx.fill();
+        //ctx.rect(tooltip_x0, tooltip_y0, 200, 100);
+
+        ctx.fillStyle = "rgba(255, 212, 178, 0.9)";
+        roundRect(ctx, tooltip_x0, tooltip_y0, 200, 100, 10);
 
         ctx.fillStyle = "black";
         ctx.font = "15px serif";
@@ -134,11 +140,12 @@ class Browser {
     }
 
     get_selected_gene_sets() {
-        let gene_sets_div = document.getElementById('gene_sets');
-        for (let i = 0; i < gene_sets_div.childNodes.length; i++) {
-            console.log(gene_sets_div.childNodes[i].childNodes.length);
+        let gene_set_selected = {};
+        for (let box of Object.keys(this.active_gene_set_boxes)) {
+            gene_set_selected[box] = this.active_gene_set_boxes[box].checked;
         }
-
+        console.log(gene_set_selected);
+        return gene_set_selected;
     }
 
     get_object_at_position(x, y) {
@@ -310,7 +317,11 @@ class Browser {
 
         this.draw_axis();
 
+        let gene_set_selected = this.get_selected_gene_sets();
+
         for (let transcript_id of Object.keys(this.transcripts)) {
+            let transcript = this.transcripts[transcript_id];
+            if (!gene_set_selected[transcript.gene_set]) continue;
             this.draw_transcript(transcript_id, level)
             level += 100;
         }
@@ -459,6 +470,7 @@ get_transcript = async function(server, transcript_id) {
         end: parseInt(response["_end"].slice(1)),
         genome: response["_genome"],
         gene: response["_gene"],
+        gene_set: response["_gene_set"],
         exons: exons
     };
     
@@ -549,40 +561,63 @@ function zoom_in() {
     browser.refresh_canvas();
 }
 
-if (sessionStorage.getItem('username') != null) {
-    server = new IdbAccessor(sessionStorage.getItem('server_url'), 'boilerbay/genomics', sessionStorage.getItem('username'), sessionStorage.getItem('password'));
+window.onload = function() {
+    if (sessionStorage.getItem('username') != null) {
+        server = new IdbAccessor(sessionStorage.getItem('server_url'), 'boilerbay/genomics', sessionStorage.getItem('username'), sessionStorage.getItem('password'));
+    }
+    set_login_status();
+
+    /** @type {HTMLCanvasElement} */
+    var canvas = document.getElementById("canvas")
+
+    browser = new Browser(canvas);
+    browser.refresh_canvas();
+
+    let gene_sets = ['Ensembl', 'refGene'];
+    let gene_sets_div = document.getElementById('gene_sets');
+    browser.active_gene_set_boxes = {};
+    for (let gene_set of gene_sets) {
+        let gene_set_div = document.createElement('div');
+        gene_set_div.style = 'display:inline; margin:10px;';
+        let box = document.createElement('input');
+        box.id = `${gene_set}_box`;
+        box.setAttribute('type', 'checkbox');
+        box_label = document.createElement('label');
+        box_label.htmlFor = `${gene_set}_box`;
+        box_label.innerHTML = gene_set;
+        box_label.style = "padding:8px;"
+        box.checked = true;
+        gene_set_div.append(box_label);
+        gene_set_div.append(box);
+        gene_sets_div.append(gene_set_div);
+
+        browser.active_gene_set_boxes[gene_set] = box;
+    }
+
 }
-set_login_status();
-
-/** @type {HTMLCanvasElement} */
-var canvas = document.getElementById("canvas")
-
-var browser = new Browser(canvas);
-browser.refresh_canvas();
-
-/*
-let gene_sets = ['Ensembl', 'refGene'];
-let gene_sets_div = document.getElementById('gene_sets');
-for (let gene_set of gene_sets) {
-    let gene_set_div = document.createElement('div');
-    gene_set_div.style = 'display:inline; margin:10px;';
-    let box = document.createElement('input');
-    box.id = `${gene_set}_box`;
-    box.setAttribute('type', 'checkbox');
-    box_label = document.createElement('label');
-    box_label.htmlFor = `${gene_set}_box`;
-    box_label.innerHTML = gene_set;
-    box_label.style = "padding:8px;"
-    box.checked = true;
-    gene_set_div.append(box_label);
-    gene_set_div.append(box);
-    gene_sets_div.append(gene_set_div);
-}
-*/
 
 
 //Window Listeners
 
 window.onresize = function() {
     browser.refresh_canvas();
+}
+
+
+function roundRect(context, x, y, w, h, radius) {
+    var r = x + w;
+    var b = y + h;
+    context.beginPath();
+    context.strokeStyle="green";
+    context.lineWidth="4";
+    context.moveTo(x+radius, y);
+    context.lineTo(r-radius, y);
+    context.quadraticCurveTo(r, y, r, y+radius);
+    context.lineTo(r, y+h-radius);
+    context.quadraticCurveTo(r, b, r-radius, b);
+    context.lineTo(x+radius, b);
+    context.quadraticCurveTo(x, b, x, b-radius);
+    context.lineTo(x, y+radius);
+    context.quadraticCurveTo(x, y, x+radius, y);
+    context.fill();
 }
