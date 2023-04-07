@@ -81,26 +81,49 @@ if __name__ == "__main__":
                 )
 
     elif args.repeat_masker_output:
+        seen_repeat_ids = {}
         with open(args.repeat_masker_output, "r") as file:
             next(file) #throw away header lines
             next(file)
             next(file)
             for line in file:
-                score, div, deletion, insertion, chromosome, start, end, left, strand, repeat_family, repeat_class, sub_start, sub_end, left2, repeat_id  = line.split()
+                score, div, deletion, insertion, chromosome, start, end, left, strand, repeat_family, repeat_class, sub_start, sub_end, left2, repeat_num  = line.split()
+
+                unique_repeat_id = "RepeatMasker" + args.gene_set + args.genome + repeat_num
+
+                if unique_repeat_id not in seen_repeat_ids:
+                    seen_repeat_ids[unique_repeat_id] = 1
+                    success, response, response_content_type = server.execute_query(
+                        prefix=[INTERFACE, "set_transcript"],
+                        data = {
+                            idb.Attribute("genome"): args.genome,
+                            idb.Attribute("chromosome"): chromosome,
+                            idb.Attribute("gene_set"): args.gene_set,
+                            idb.Attribute("gene_id"): repeat_class,
+                            idb.Attribute("transcript_id"): unique_repeat_id,
+                            idb.Attribute("start"): int(start),
+                            idb.Attribute("end"): int(end),
+                            idb.Attribute("strand"): strand
+                        },
+                        verbose=False
+                    )
+                sub_repeat_id = seen_repeat_ids[unique_repeat_id]
                 success, response, response_content_type = server.execute_query(
-                    prefix=[INTERFACE, "set_transcript"],
+                    prefix=[INTERFACE, "set_exon"],
                     data = {
                         idb.Attribute("genome"): args.genome,
                         idb.Attribute("chromosome"): chromosome,
-                        idb.Attribute("gene_set"): args.gene_set,
-                        idb.Attribute("gene_id"): repeat_class,
-                        idb.Attribute("transcript_id"): repeat_id,
-                        idb.Attribute("start"): int(start),
-                        idb.Attribute("end"): int(end),
+                        idb.Attribute("transcript_id"): unique_repeat_id,
+                        idb.Attribute("exon_id"): sub_repeat_id,
+                        idb.Attribute("feature"): repeat_family,
+                        idb.Attribute("start"): int(sub_start),
+                        idb.Attribute("end"): int(sub_end),
                         idb.Attribute("strand"): strand
                     },
-                    verbose=False
-                )
+                    verbose = False
+                )   
+                seen_repeat_ids[unique_repeat_id] += 1
+
 
 
 
