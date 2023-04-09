@@ -81,53 +81,39 @@ if __name__ == "__main__":
                 )
 
     elif args.repeat_masker_output:
-        seen_repeat_ids = {}
+        
+        seen_ids = {}
         with open(args.repeat_masker_output, "r") as file:
             next(file) #throw away header lines
             next(file)
             next(file)
             for line in file:
-                score, div, deletion, insertion, chromosome, start, end, left, strand, repeat_family, repeat_class, sub_start, sub_end, left2, repeat_num  = line.split()
+                score, div, deletion, insertion, chromosome, start, end, left, strand, repeat_family, repeat_class, sub_start, sub_end, left2, repeat_id  = line.split()
 
-                unique_repeat_id = "RepeatMasker" + args.gene_set + args.genome + repeat_num
+                repeat_prefix = (args.gene_set, args.genome, int(repeat_id))
 
-                if unique_repeat_id not in seen_repeat_ids:
-                    seen_repeat_ids[unique_repeat_id] = 1
-                    success, response, response_content_type = server.execute_query(
-                        prefix=[INTERFACE, "set_transcript"],
-                        data = {
-                            idb.Attribute("genome"): args.genome,
-                            idb.Attribute("chromosome"): chromosome,
-                            idb.Attribute("gene_set"): args.gene_set,
-                            idb.Attribute("gene_id"): repeat_class,
-                            idb.Attribute("transcript_id"): unique_repeat_id,
-                            idb.Attribute("start"): int(start),
-                            idb.Attribute("end"): int(end),
-                            idb.Attribute("strand"): strand
-                        },
-                        verbose=False
-                    )
-                sub_repeat_id = seen_repeat_ids[unique_repeat_id]
+                repeat_num = 0
+                if repeat_prefix in seen_ids:
+                    seen_ids[repeat_prefix] += 1
+                else:
+                    seen_ids[repeat_prefix] = 1
+
+                unique_repeat_id = tuple(list(repeat_prefix) + [seen_ids[repeat_prefix]])
+                print(unique_repeat_id)
+
                 success, response, response_content_type = server.execute_query(
-                    prefix=[INTERFACE, "set_exon"],
+                    prefix=[INTERFACE, "set_transcript"],
                     data = {
                         idb.Attribute("genome"): args.genome,
                         idb.Attribute("chromosome"): chromosome,
+                        idb.Attribute("gene_set"): args.gene_set,
+                        idb.Attribute("gene_id"): repeat_class,
                         idb.Attribute("transcript_id"): unique_repeat_id,
-                        idb.Attribute("exon_id"): sub_repeat_id,
-                        idb.Attribute("feature"): repeat_family,
-                        idb.Attribute("start"): int(sub_start),
-                        idb.Attribute("end"): int(sub_end),
-                        idb.Attribute("strand"): strand
+                        idb.Attribute("start"): int(start),
+                        idb.Attribute("end"): int(end),
+                        idb.Attribute("strand"): strand,
+                        idb.Attribute("type"): "repeat",
+                        idb.Attribute("family"): repeat_family
                     },
-                    verbose = False
-                )   
-                seen_repeat_ids[unique_repeat_id] += 1
-
-
-
-
-
-
-
-
+                    verbose=False
+                )
