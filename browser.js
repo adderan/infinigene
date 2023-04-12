@@ -1,25 +1,128 @@
 const INTERFACE = "com.boilerbay.genomics"
 
 
-class Axis {
-    constructor(canvas) {
-
-    }
-}
-
-class Track {
-
-}
-
-class TranscriptTrack extends Track {
-    draw() {
-
-    }
-
-}
-
 var browser = null;
 var server = null;
+
+class SequenceElement {
+    constructor(element_id, gene_set, genome, chromosome, start, end, strand) {
+        this.element_id = element_id;
+        this.gene_set = gene_set;
+        this.genome = genome;
+        this.chromosome = chromosome;
+        this.start = start;
+        this.end = end;
+        this.strand = strand;
+
+        this.track_height = 100;
+    }
+}
+
+class RepeatElement extends SequenceElement {
+    constructor(transcript_id, gene_set, genome, chromosome, start, end, strand, family) {
+        super(transcript_id, gene_set, genome, chromosome, start, end, strand);
+        this.family = family;
+
+        this.line_width = 20;
+    }
+
+    draw(browser, draw_level) {
+        let clickable_objects = [];
+        let start = browser.to_screen_coordinates(this.start);
+
+        let end = browser.to_screen_coordinates(this.end);
+
+        start = Math.max(start, 0);
+        end = Math.min(browser.canvas.width, end);
+        ctx.fillStyle = "rgba(0.5, 0.5, 0, 0.8)";
+
+        repeat_box = new Path2D();
+
+        ctx.rect(start, draw_level - this.line_width/2, end-start, this.line_width);
+        ctx.fill(repeat_box);
+
+        clickable_objects.push({
+            "path": repeat_box,
+            "tooltip_info": [this.family]
+        });
+
+        ctx.fillStyle = "black";
+        ctx.font = "20px sans bold";
+
+        ctx.fillText(transcript_label, start+this.transcript_label_offset, draw_level - 20);
+        return clickable_objects;
+    }
+}
+
+class GeneElement extends SequenceElement {
+    constructor(element_id, gene_set, genome, chromosome, start, end, strand, exons, gene_id) {
+        super(element_id, gene_set, genome, chromosome, start, end, strand);
+        this.exons = exons;
+        this.gene_id = gene_id;
+
+        this.color_codes = {
+            "start_codon": "red",
+            "CDS": "green",
+            "5UTR": "yellow",
+            "3UTR": "blue",
+            "exon": "purple"
+        };
+
+        this.box_height = 50;
+        this.line_width = 6;
+        this.transcript_label_offset = 40;
+
+
+    }
+    draw(browser, draw_level) {
+
+        let clickable_objects = [];
+        let ctx = browser.canvas.getContext("2d");
+        
+        let start = browser.to_screen_coordinates(this.start);
+
+        let end = browser.to_screen_coordinates(this.end);
+
+        start = Math.max(start, 0);
+        end = Math.min(browser.canvas.width, end);
+
+        
+        for ([exon_id, exon] of Object.entries(this.exons)) {
+
+            let exon_start = browser.to_screen_coordinates(exon.start);
+            let exon_end = browser.to_screen_coordinates(exon.end);
+
+            exon_start = Math.max(0, exon_start);
+            exon_end = Math.min(browser.canvas.width, exon_end);
+
+            ctx.fillStyle = this.color_codes[exon.feature];
+            const x0 = exon_start;
+            const y0 = draw_level - this.box_height/2;
+            const x1 = exon_end;
+            const y1 = draw_level + this.box_height/2;
+
+            const exon_box = new Path2D();
+            exon_box.rect(x0, y0, x1-x0, y1-y0);
+            ctx.fill(exon_box);
+
+            clickable_objects.push({
+                "path": exon_box,
+                "tooltip_info": [exon.exon_id, exon.feature]
+            });
+
+        }
+        //draw thin line for whole transcript
+        ctx.fillStyle = "black";
+        ctx.fillRect(start, draw_level - this.line_width/2, end-start, this.line_width);
+
+        ctx.font = "20px Sans Bold";
+        ctx.fillStyle = "black";
+        let transcript_label = `${this.gene_id}`;
+        ctx.fillText(transcript_label, start+this.transcript_label_offset, draw_level - 20);
+
+        return clickable_objects;
+    }   
+}
 
 
 class Browser {
@@ -38,13 +141,7 @@ class Browser {
         this.axis_thickness = 2;
         this.axis_tick_height = 16;
 
-        this.color_codes = {
-            "start_codon": "red",
-            "CDS": "green",
-            "5UTR": "yellow",
-            "3UTR": "blue",
-            "exon": "purple"
-        };
+        
         this.on_screen_objects = [];
 
         this.canvas.addEventListener('click', this);
@@ -57,6 +154,7 @@ class Browser {
 
         this.active_gene_set_boxes = {};
 
+        this.transcript_scope = 1.0; //distance in canvas widths to keep offscreen transcripts
     }
 
     handleEvent(event) {
@@ -98,6 +196,7 @@ class Browser {
         let scale = this.view_width/this.canvas.width;
         let new_position = this.position - parseInt(offset * scale);
         this.set_coordinates(this.genome, this.chromosome, new_position, this.view_width);
+
         if (Date.now() - this.last_track_refresh > 500) {
             this.update_tracks();
         }
@@ -106,8 +205,8 @@ class Browser {
     }
 
     draw_tooltip(x, y) {
-        const exon = this.get_object_at_position(x, y);
-        if (exon == null) {
+        const tooltip_info = this.get_object_at_position(x, y);
+        if (tooltip_info == null) {
             return;
         }
         this.current_tooltip = (x, y);
@@ -133,9 +232,10 @@ class Browser {
 
         let vpos = tooltip_y0 + 20;
         let xpos = tooltip_x0 + 20;
-        ctx.fillText(`ID: ${exon.exon_id}`, xpos, vpos);
-        vpos += 20;
-        ctx.fillText(`Feature: ${exon.feature}`, xpos, vpos);
+        for (let line of tooltip_info) {
+            ctx.fillText(line, xpos, vpos);
+            vpos += 20;
+        }
 
     }
 
@@ -151,7 +251,7 @@ class Browser {
         const ctx = this.canvas.getContext("2d");
         for (const object of this.on_screen_objects) {
             if (ctx.isPointInPath(object.path, x, y)) {
-                return object.object;
+                return object.tooltip_info;
             }
 
         }
@@ -230,6 +330,7 @@ class Browser {
                 this.position + this.view_width
         );
 
+
         for (let transcript_id of transcript_ids) {
             if (transcript_id in this.transcripts) {
                 console.log("Skipping downloading transcript");
@@ -240,54 +341,6 @@ class Browser {
             this.refresh_canvas();
         }
         this.last_track_refresh = Date.now();
-    }
-
-    draw_transcript(transcript_id, draw_level) {
-        let ctx = this.canvas.getContext("2d");
-        let scale = this.view_width/this.canvas.width
-        let transcript = this.transcripts[transcript_id];
-        
-        let start = this.to_screen_coordinates(transcript.start);
-
-        let end = this.to_screen_coordinates(transcript.end);
-
-        start = Math.max(start, 0);
-        end = Math.min(this.canvas.width, end);
-
-        
-        for ([exon_id, exon] of Object.entries(transcript.exons)) {
-
-            let exon_start = this.to_screen_coordinates(exon.start);
-            let exon_end = this.to_screen_coordinates(exon.end);
-
-            exon_start = Math.max(0, exon_start);
-            exon_end = Math.min(this.canvas.width, exon_end);
-
-            ctx.fillStyle = this.color_codes[exon.feature];
-            const x0 = exon_start;
-            const y0 = draw_level - this.track_height/2;
-            const x1 = exon_end;
-            const y1 = draw_level + this.track_height/2;
-
-            const exon_box = new Path2D();
-            exon_box.rect(x0, y0, x1-x0, y1-y0);
-            ctx.fill(exon_box);
-
-            this.on_screen_objects.push({
-                "path": exon_box,
-                "object": exon
-            });
-
-        }
-        //draw thin line for whole transcript
-        ctx.fillStyle = "black";
-        ctx.fillRect(start, draw_level - this.line_width/2, end-start, this.line_width);
-
-        ctx.font = "20px Sans Bold";
-        ctx.fillStyle = "black";
-        let transcript_label = `${transcript.gene}`;
-        ctx.fillText(transcript_label, start+this.transcript_label_offset, draw_level - 20);
-
     }
 
     refresh_canvas() {
@@ -305,29 +358,39 @@ class Browser {
 
         //Drop out-of-view transcripts and resize canvas in advance, because resizing it will clear
         //it.
+        let transcripts_to_draw = [];
         for (let transcript_id of Object.keys(this.transcripts)) {
             let transcript = this.transcripts[transcript_id];
             if (!transcript) {
                 delete this.transcripts[transcript_id];
                 continue
             }
+
             let transcript_screen_end = this.to_screen_coordinates(transcript.end);
             let transcript_screen_start = this.to_screen_coordinates(transcript.start);
-            if ((transcript_screen_end < 0) || (transcript_screen_start > this.canvas.width)) {
+
+            let far_before = transcript_screen_end < -1*this.transcript_scope*this.canvas_width;
+            let far_after = transcript_screen_start > this.transcript_scope*this.canvas_width;
+            if (far_before || far_after) {
+                console.log("Deleting far out-of-scope transcript");
                 delete this.transcripts[transcript_id];
+            }
+
+            if ((transcript_screen_end < 0) || (transcript_screen_start > this.canvas.width)) {
                 continue;
             }
+            transcripts_to_draw.push(transcript);
         }
-        this.canvas.height = 100 * Object.keys(this.transcripts).length + 100;
+        this.canvas.height = 100 * transcripts_to_draw.length + 100;
 
         this.draw_axis();
 
         let gene_set_selected = this.get_selected_gene_sets();
 
-        for (let transcript_id of Object.keys(this.transcripts)) {
-            let transcript = this.transcripts[transcript_id];
+        for (let transcript of transcripts_to_draw) {
             if (!gene_set_selected[transcript.gene_set]) continue;
-            this.draw_transcript(transcript_id, level)
+            let clickable_objects = transcript.draw(this, level);
+            this.on_screen_objects = this.on_screen_objects.concat(clickable_objects);
             level += 100;
         }
         if (this.current_tooltip != null) {
@@ -338,26 +401,6 @@ class Browser {
 
 }
 
-
-class GeneTrack extends Track {
-    constructor(gene_name, start, end) {
-        this.gene_name = gene_name;
-        this.start = start;
-        this.end = end;
-    }
-
-    draw(canvas, position, height) {
-        let ctx = canvas.getContext("2d");
-        ctx.fillRect(0, position, canvas.width, position+height);
-
-    }
-};
-
-class SequenceTrack extends Track {
-
-};
-
-var browser = null;
 
 connect_server = async function() {
     let server_field = document.getElementById("server_url");
@@ -456,30 +499,60 @@ get_transcript = async function(server, transcript_id) {
 
     if (response == null || response.status != 200) return null;
     response = await response.json();
-    exons = {};
-    for ([exon_id, exon] of Object.entries(response["_exons"])) {
-        exon = flatten_to_list(exon);
-        exons[exon_id] = {
-            exon_id: exon_id,
-            chromosome: exon[0],
-            start: parseInt(exon[1]),
-            end: parseInt(exon[2]),
-            strand: exon[3],
-            feature: exon[4]
-        }
-    }
 
-    transcript = {
-        chromosome: response["_chromosome"],
-        start: parseInt(response["_start"].slice(1)),
-        end: parseInt(response["_end"].slice(1)),
-        genome: response["_genome"],
-        gene: response["_gene"],
-        gene_set: response["_gene_set"],
-        exons: exons
-    };
+    let gene_set = response["_gene_set"];
+    let genome = response["_genome"];
+    let chromosome = response["_chromosome"];
+    let start = parseInt(response["_start"].slice(1));
+    let end = parseInt(response["_end"].slice(1));
+    let strand = response["_strand"];
+
+    let seq_element = null;
+
+    if (response["_type"] == "repeat") {
+        let family = response["_family"];
+
+        seq_element = new RepeatElement(
+            transcript_id,
+            gene_set,
+            genome,
+            chromosome,
+            start, 
+            end,
+            strand,
+            family
+        );
+
+    }
+    else {
+        gene_id = response["_gene"];
+        exons = {};
+        for ([exon_id, exon] of Object.entries(response["_exons"])) {
+            exon = flatten_to_list(exon);
+            exons[exon_id] = {
+                exon_id: exon_id,
+                chromosome: exon[0],
+                start: parseInt(exon[1]),
+                end: parseInt(exon[2]),
+                strand: exon[3],
+                feature: exon[4]
+            }
+        }
+
+        seq_element = new GeneElement(
+            transcript_id,
+            gene_set,
+            genome,
+            chromosome,
+            start,
+            end,
+            strand,
+            exons,
+            gene_id
+        );
+    }
     
-    return transcript;
+    return seq_element;
 }
 
 get_transcripts_in_range = async function(genome, chromosome, start, end) {
@@ -559,10 +632,14 @@ go_to_position = async function() {
 function zoom_out() {
     browser.view_width *= 2;
     browser.refresh_canvas();
-    browser.update_tracks();
 }
 function zoom_in() {
     browser.view_width /= 2;
+    browser.refresh_canvas();
+}
+
+function refresh_button() {
+    browser.update_tracks();
     browser.refresh_canvas();
 }
 
