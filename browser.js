@@ -158,7 +158,6 @@ class Browser {
     }
 
     handleEvent(event) {
-        console.log(event.type);
         if (event.type == 'wheel') {
             if (event.deltaX == 0) return;
             browser.move(-1*event.deltaX);
@@ -322,13 +321,13 @@ class Browser {
 
     async update_tracks() {
         console.log("Updating tracks from server.")
-        console.log(this.transcripts);
         let transcript_ids = await get_transcripts_in_range(
                 this.genome, 
                 this.chromosome, 
                 this.position, 
                 this.position + this.view_width
         );
+        if (transcript_ids == null) return;
 
 
         for (let transcript_id of transcript_ids) {
@@ -508,6 +507,7 @@ get_transcript = async function(server, transcript_id) {
     let strand = response["_strand"];
 
     let seq_element = null;
+    console.log(response["_type"]);
 
     if (response["_type"] == "repeat") {
         let family = response["_family"];
@@ -564,10 +564,18 @@ get_transcripts_in_range = async function(genome, chromosome, start, end) {
             "end": end
         }
     );
+
     if (response == null || response.status != 200) {
         return null;
     }
     response = await response.json();
+    console.log(response);
+    for (let transcript_prefix of Object.keys(response)) {
+        let transcript_suffix = response[transcript_prefix];
+        if (transcript_suffix == null) continue;
+        console.log(flatten_to_list(transcript_suffix));
+        
+    }
     transcript_ids = Object.keys(response);
     return transcript_ids;
     
@@ -617,7 +625,6 @@ go_to_position = async function() {
 
     let view_width_field = document.getElementById("view_width");
     view_width = parseInt(view_width_field.value);
-    console.log(view_width);
     
     browser.set_coordinates(
         genome, 
