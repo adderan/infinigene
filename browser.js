@@ -573,7 +573,7 @@ get_transcripts_in_range = async function(genome, chromosome, start, end) {
     for (let transcript_prefix of Object.keys(response)) {
         let transcript_suffix = response[transcript_prefix];
         if (transcript_suffix == null) continue;
-        console.log(flatten_to_list(transcript_suffix));
+        console.log(flatten_to_list_2(transcript_suffix));
         
     }
     transcript_ids = Object.keys(response);
