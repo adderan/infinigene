@@ -1,4 +1,4 @@
-import {IdbAccessor, flatten_to_list} from "./intelliwaterai/infinitydb/access.js"
+import {IdbAccessor, flatten_to_list, unflatten_from_lists} from "./intelliwaterai/infinitydb/access.js"
 const INTERFACE = "com.boilerbay.genomics"
 
 
@@ -355,7 +355,6 @@ class Browser {
 
         for (let transcript_id of transcript_ids) {
             if (transcript_id in this.transcripts) {
-                console.log("Skipping downloading transcript");
                 continue;
             }
             let transcript = await get_transcript(server, transcript_id);
@@ -514,6 +513,9 @@ async function get_transcripts_in_gene(server, gene) {
 }
 
 async function get_transcript(server, transcript_id) {
+    if (transcript_id instanceof Array) {
+        transcript_id = unflatten_from_lists(transcript_id);
+    }
     let response = await server.do_query(
         [INTERFACE, "get_transcript"],
         {"transcript_id": transcript_id}
@@ -549,7 +551,6 @@ async function get_transcript(server, transcript_id) {
     else {
         let gene_id = response["_gene"];
         let exons_as_lists = flatten_to_list(response["_exons"]);
-        console.log(exons_as_lists);
         let exons = {};
         for (let exon of exons_as_lists) {
             let exon_id = exon[0];
@@ -575,7 +576,6 @@ async function get_transcript(server, transcript_id) {
             gene_id
         );
     }
-    console.log(typeof(seq_element));
     
     return seq_element;
 }
@@ -594,14 +594,8 @@ async function get_transcripts_in_range(genome, chromosome, start, end) {
         return null;
     }
     response = await response.json();
-    console.log(response);
-    for (let transcript_prefix of Object.keys(response)) {
-        let transcript_suffix = response[transcript_prefix];
-        if (transcript_suffix == null) continue;
-        console.log(flatten_to_list(transcript_suffix));
-        
-    }
-    let transcript_ids = Object.keys(response);
+    let transcript_ids = flatten_to_list(response);
+    console.log(transcript_ids);
     return transcript_ids;
     
 }
@@ -632,7 +626,6 @@ async function go_to_position() {
     if (genome == null) {
         //try to find the gene name
         let transcripts_in_gene = await get_transcripts_in_gene(server, coordinates_field.value);
-        console.log(transcripts_in_gene);
         if (transcripts_in_gene) {
             transcript = await get_transcript(server, transcripts_in_gene[0]);
             genome = transcript.genome;
