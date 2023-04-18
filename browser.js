@@ -1,4 +1,6 @@
+import {IdbAccessor, flatten_to_list} from "./intelliwaterai/infinitydb/access.js"
 const INTERFACE = "com.boilerbay.genomics"
+
 
 
 var browser = null;
@@ -15,6 +17,26 @@ class SequenceElement {
         this.strand = strand;
 
         this.track_height = 100;
+    }
+    draw(browser, draw_level) {
+        let clickable_objects = [];
+        let start = browser.to_screen_coordinates(this.start);
+
+        let end = browser.to_screen_coordinates(this.end);
+
+        start = Math.max(start, 0);
+        end = Math.min(browser.canvas.width, end);
+        ctx.fillStyle = "black";
+
+
+        ctx.fillRect(start, draw_level - this.line_width/2, end-start, this.line_width);
+
+
+        ctx.fillStyle = "black";
+        ctx.font = "20px sans bold";
+
+        ctx.fillText(transcript_label, start+this.transcript_label_offset, draw_level - 20);
+        return clickable_objects;
     }
 }
 
@@ -34,7 +56,7 @@ class RepeatElement extends SequenceElement {
 
         start = Math.max(start, 0);
         end = Math.min(browser.canvas.width, end);
-        ctx.fillStyle = "rgba(0.5, 0.5, 0, 0.8)";
+        ctx.fillStyle = "rgba(0.5, 0, 0, 0.7)";
 
         repeat_box = new Path2D();
 
@@ -87,7 +109,8 @@ class GeneElement extends SequenceElement {
         end = Math.min(browser.canvas.width, end);
 
         
-        for ([exon_id, exon] of Object.entries(this.exons)) {
+        for (let exon_id of Object.keys(this.exons)) {
+            let exon = this.exons[exon_id];
 
             let exon_start = browser.to_screen_coordinates(exon.start);
             let exon_end = browser.to_screen_coordinates(exon.end);
@@ -112,7 +135,7 @@ class GeneElement extends SequenceElement {
 
         }
         //draw thin line for whole transcript
-        ctx.fillStyle = "black";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
         ctx.fillRect(start, draw_level - this.line_width/2, end-start, this.line_width);
 
         ctx.font = "20px Sans Bold";
@@ -401,7 +424,7 @@ class Browser {
 }
 
 
-connect_server = async function() {
+async function connect_server() {
     let server_field = document.getElementById("server_url");
     let user_field = document.getElementById("username");
     let password_field = document.getElementById("password");
@@ -423,12 +446,12 @@ connect_server = async function() {
 
 }
 
-set_login_status = async function() {
+async function set_login_status() {
     let connection_status = document.getElementById("connection_status");
     let login_button = document.getElementById("login");
     let server_status = 0;
     if (server) {
-        response = await server.head();
+        let response = await server.head();
         server_status = response.status;
 
     }
@@ -455,14 +478,14 @@ window.onload = function() {
 
 }
 
-show_loginpane = function() {
+function show_loginpane() {
     document.getElementById('loginpane').style.display='block';
 }
-hide_loginpane = function() {
+function hide_loginpane() {
     document.getElementById('loginpane').style.display='none';
 }
 
-logout_server = function() {
+function logout_server() {
     sessionStorage.removeItem('username');
     sessionStorage.removeItem('password');
     sessionStorage.removeItem('server_url');
@@ -475,11 +498,11 @@ logout_server = function() {
     login_button.innerHTML = "Login";
 }
 
-set_disconnected_status = function() {
+function set_disconnected_status() {
     document.getElementById("connection_status").innerHTML = "Must login first."
 }
 
-get_transcripts_in_gene = async function(server, gene) {
+async function get_transcripts_in_gene(server, gene) {
     let response = await server.do_query(
             [INTERFACE, "get_transcripts_in_gene"], 
             {"gene": gene}
@@ -490,7 +513,7 @@ get_transcripts_in_gene = async function(server, gene) {
     return transcript_ids;
 }
 
-get_transcript = async function(server, transcript_id) {
+async function get_transcript(server, transcript_id) {
     let response = await server.do_query(
         [INTERFACE, "get_transcript"],
         {"transcript_id": transcript_id}
@@ -507,7 +530,6 @@ get_transcript = async function(server, transcript_id) {
     let strand = response["_strand"];
 
     let seq_element = null;
-    console.log(response["_type"]);
 
     if (response["_type"] == "repeat") {
         let family = response["_family"];
@@ -525,17 +547,19 @@ get_transcript = async function(server, transcript_id) {
 
     }
     else {
-        gene_id = response["_gene"];
-        exons = {};
-        for ([exon_id, exon] of Object.entries(response["_exons"])) {
-            exon = flatten_to_list(exon);
+        let gene_id = response["_gene"];
+        let exons_as_lists = flatten_to_list(response["_exons"]);
+        console.log(exons_as_lists);
+        let exons = {};
+        for (let exon of exons_as_lists) {
+            let exon_id = exon[0];
             exons[exon_id] = {
                 exon_id: exon_id,
-                chromosome: exon[0],
-                start: parseInt(exon[1]),
-                end: parseInt(exon[2]),
-                strand: exon[3],
-                feature: exon[4]
+                chromosome: exon[1],
+                start: parseInt(exon[2]),
+                end: parseInt(exon[3]),
+                strand: exon[4],
+                feature: exon[5]
             }
         }
 
@@ -551,13 +575,14 @@ get_transcript = async function(server, transcript_id) {
             gene_id
         );
     }
+    console.log(typeof(seq_element));
     
     return seq_element;
 }
 
-get_transcripts_in_range = async function(genome, chromosome, start, end) {
+async function get_transcripts_in_range(genome, chromosome, start, end) {
     let response = await server.do_query([INTERFACE, "get_transcripts_in_range"],
-        data = {
+        {
             "genome": genome,
             "chromosome": chromosome,
             "start": start, 
@@ -573,16 +598,15 @@ get_transcripts_in_range = async function(genome, chromosome, start, end) {
     for (let transcript_prefix of Object.keys(response)) {
         let transcript_suffix = response[transcript_prefix];
         if (transcript_suffix == null) continue;
-        console.log(flatten_to_list_2(transcript_suffix));
+        console.log(flatten_to_list(transcript_suffix));
         
     }
-    transcript_ids = Object.keys(response);
+    let transcript_ids = Object.keys(response);
     return transcript_ids;
     
 }
 
-
-go_to_position = async function() {
+async function go_to_position() {
     if (server == null) {
         set_disconnected_status();
         return;
@@ -590,7 +614,7 @@ go_to_position = async function() {
     let coordinates_field = document.getElementById("coordinates");
     const coords_exp = /^([a-zA-Z0-9]+):([a-zA-Z0-9]+):([0-9]+)$/;
     const coords = coordinates_field.value.match(coords_exp)
-    let genome, chromosome, position;
+    let transcript, genome, chromosome, position;
     if (coords) {
         genome = coords[1];
         chromosome = coords[2];
@@ -598,7 +622,7 @@ go_to_position = async function() {
     }
 
     if (genome == null) {
-        let transcript = await get_transcript(server, coordinates_field.value);
+        transcript = await get_transcript(server, coordinates_field.value);
         if (transcript) {
             genome = transcript.genome;
             chromosome = transcript.chromosome;
@@ -608,6 +632,7 @@ go_to_position = async function() {
     if (genome == null) {
         //try to find the gene name
         let transcripts_in_gene = await get_transcripts_in_gene(server, coordinates_field.value);
+        console.log(transcripts_in_gene);
         if (transcripts_in_gene) {
             transcript = await get_transcript(server, transcripts_in_gene[0]);
             genome = transcript.genome;
@@ -645,12 +670,23 @@ function zoom_in() {
     browser.refresh_canvas();
 }
 
-function refresh_button() {
+function refresh_browser() {
     browser.update_tracks();
     browser.refresh_canvas();
 }
 
 window.onload = function() {
+    let goButton = document.getElementById("go")
+    goButton.addEventListener('click', go_to_position);
+
+    let connectButton = document.getElementById('connect');
+    connectButton.addEventListener('click', connect_server);
+
+    let zoomInButton = document.getElementById("zoom_in");
+    zoomInButton.addEventListener('click', zoom_in);
+    let zoomOutButton = document.getElementById("zoom_out");
+    zoomOutButton.addEventListener('click', zoom_out);
+
     if (sessionStorage.getItem('username') != null) {
         server = new IdbAccessor(sessionStorage.getItem('server_url'), 'boilerbay/genomics', sessionStorage.getItem('username'), sessionStorage.getItem('password'));
     }
@@ -662,6 +698,9 @@ window.onload = function() {
     browser = new Browser(canvas);
     browser.refresh_canvas();
 
+    let refreshButton = document.getElementById("refresh");
+    refreshButton.addEventListener('click', refresh_browser);
+
     let gene_sets = ['Ensembl', 'refGene'];
     let gene_sets_div = document.getElementById('gene_sets');
     browser.active_gene_set_boxes = {};
@@ -671,7 +710,7 @@ window.onload = function() {
         let box = document.createElement('input');
         box.id = `${gene_set}_box`;
         box.setAttribute('type', 'checkbox');
-        box_label = document.createElement('label');
+        let box_label = document.createElement('label');
         box_label.htmlFor = `${gene_set}_box`;
         box_label.innerHTML = gene_set;
         box_label.style = "padding:8px;"
@@ -683,6 +722,7 @@ window.onload = function() {
 
         browser.active_gene_set_boxes[gene_set] = box;
     }
+
 
 }
 
