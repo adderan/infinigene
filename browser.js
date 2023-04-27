@@ -504,7 +504,7 @@ function set_disconnected_status() {
 async function get_transcripts_in_gene(server, gene) {
     let response = await server.do_query(
             [INTERFACE, "get_transcripts_in_gene"], 
-            {"gene": gene}
+            {"_gene": gene}
     );
     if (response == null) return null;
     response = await response.json();
@@ -514,11 +514,11 @@ async function get_transcripts_in_gene(server, gene) {
 
 async function get_transcript(server, transcript_id) {
     if (transcript_id instanceof Array) {
-        transcript_id = unflatten_from_lists(transcript_id);
+        transcript_id = unflatten_from_lists([transcript_id]);
     }
     let response = await server.do_query(
         [INTERFACE, "get_transcript"],
-        {"transcript_id": transcript_id}
+        {"_transcript_id": transcript_id}
     );
 
     if (response == null || response.status != 200) return null;
@@ -583,10 +583,10 @@ async function get_transcript(server, transcript_id) {
 async function get_transcripts_in_range(genome, chromosome, start, end) {
     let response = await server.do_query([INTERFACE, "get_transcripts_in_range"],
         {
-            "genome": genome,
-            "chromosome": chromosome,
-            "start": start, 
-            "end": end
+            "_genome": genome,
+            "_chromosome": chromosome,
+            "_start": start, 
+            "_end": end
         }
     );
 
