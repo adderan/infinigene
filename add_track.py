@@ -113,7 +113,7 @@ if __name__ == "__main__":
                         idb.Attribute("gene"), repeat_class
                 )] = None
 
-                if len(query_data) >= 100:
+                if len(query_data) >= 10000:
                     success, response, response_content_type = server.execute_query(
                         prefix=[INTERFACE, "set_transcripts"],
                         data = query_data,

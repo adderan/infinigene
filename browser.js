@@ -533,8 +533,8 @@ async function get_transcript(server, transcript_id) {
 
     let seq_element = null;
 
-    if (response["_type"] == "repeat") {
-        let family = response["_family"];
+    if (response["_transcript_type"] == "repeat") {
+        let family = response["_gene"];
 
         seq_element = new RepeatElement(
             transcript_id,
