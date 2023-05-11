@@ -83,10 +83,12 @@ if __name__ == "__main__":
     elif args.repeat_masker_output:
         
         seen_ids = {}
+        num_uploaded = 0
         with open(args.repeat_masker_output, "r") as file:
             next(file) #throw away header lines
             next(file)
             next(file)
+            query_data = {}
             for line in file:
                 score, div, deletion, insertion, chromosome, start, end, left, strand, repeat_family, repeat_class, sub_start, sub_end, left2, repeat_id  = line.split()
 
@@ -98,22 +100,25 @@ if __name__ == "__main__":
                 else:
                     seen_ids[repeat_prefix] = 1
 
-                unique_repeat_id = tuple(list(repeat_prefix) + [seen_ids[repeat_prefix]])
-                print(unique_repeat_id)
+                query_data[(
+                        idb.Attribute("transcript_id"), args.gene_set, args.genome, int(repeat_id), seen_ids[repeat_prefix], 
 
-                success, response, response_content_type = server.execute_query(
-                    prefix=[INTERFACE, "set_transcript"],
-                    data = {
-                        idb.Attribute("genome"): args.genome,
-                        idb.Attribute("chromosome"): chromosome,
-                        idb.Attribute("gene_set"): args.gene_set,
-                        idb.Attribute("gene_id"): repeat_class,
-                        idb.Attribute("transcript_id"): unique_repeat_id,
-                        idb.Attribute("start"): int(start),
-                        idb.Attribute("end"): int(end),
-                        idb.Attribute("strand"): strand,
-                        idb.Attribute("type"): "repeat",
-                        idb.Attribute("family"): repeat_family
-                    },
-                    verbose=False
-                )
+                        idb.Attribute("gene_set"), args.gene_set,
+                        idb.Attribute("genome"), args.genome,
+                        idb.Attribute("chromosome"), chromosome,
+                        idb.Attribute("strand"), strand,
+                        idb.Attribute("start"), int(start),
+                        idb.Attribute("end"), int(end),
+                        idb.Attribute("transcript_type"), "repeat",
+                        idb.Attribute("gene"), repeat_class
+                )] = None
+
+                if len(query_data) >= 100:
+                    success, response, response_content_type = server.execute_query(
+                        prefix=[INTERFACE, "set_transcripts"],
+                        data = query_data,
+                        verbose=False
+                    )
+                    num_uploaded += len(query_data)
+                    query_data.clear()
+                    print("Uploaded", num_uploaded)
