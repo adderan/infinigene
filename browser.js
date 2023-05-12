@@ -49,6 +49,7 @@ class RepeatElement extends SequenceElement {
     }
 
     draw(browser, draw_level) {
+        console.log("Drawing repeat element");
         let clickable_objects = [];
         let start = browser.to_screen_coordinates(this.start);
 
@@ -343,7 +344,6 @@ class Browser {
     }
 
     async update_tracks() {
-        console.log("Updating tracks from server.")
         let transcript_ids = await get_transcripts_in_range(
                 this.genome, 
                 this.chromosome, 
@@ -354,11 +354,11 @@ class Browser {
 
 
         for (let transcript_id of transcript_ids) {
-            if (transcript_id in this.transcripts) {
+            if (transcript_id.toString() in this.transcripts) {
                 continue;
             }
             let transcript = await get_transcript(server, transcript_id);
-            this.transcripts[transcript_id] = transcript;
+            this.transcripts[transcript_id.toString()] = transcript;
             this.refresh_canvas();
         }
         this.last_track_refresh = Date.now();
@@ -513,12 +513,13 @@ async function get_transcripts_in_gene(server, gene) {
 }
 
 async function get_transcript(server, transcript_id) {
+    let query_transcript_id = transcript_id;
     if (transcript_id instanceof Array) {
-        transcript_id = unflatten_from_lists([transcript_id]);
+        query_transcript_id = unflatten_from_lists([transcript_id]);
     }
     let response = await server.do_query(
         [INTERFACE, "get_transcript"],
-        {"_transcript_id": transcript_id}
+        {"_transcript_id": query_transcript_id}
     );
 
     if (response == null || response.status != 200) return null;
@@ -532,6 +533,7 @@ async function get_transcript(server, transcript_id) {
     let strand = response["_strand"];
 
     let seq_element = null;
+
 
     if (response["_transcript_type"] == "repeat") {
         let family = response["_gene"];
