@@ -26,6 +26,7 @@ class SequenceElement {
 
         start = Math.max(start, 0);
         end = Math.min(browser.canvas.width, end);
+        let ctx = browser.canvas.getContext("2d");
         ctx.fillStyle = "black";
 
 
@@ -57,22 +58,27 @@ class RepeatElement extends SequenceElement {
 
         start = Math.max(start, 0);
         end = Math.min(browser.canvas.width, end);
-        ctx.fillStyle = "rgba(0.5, 0, 0, 0.7)";
+        console.log(start, end);
+        console.log(browser.canvas.width);
+        console.log(this.family);
 
-        repeat_box = new Path2D();
+        let ctx = browser.canvas.getContext("2d");
+        ctx.fillStyle = "rgba(1, 0, 0, 0.7)";
 
-        ctx.rect(start, draw_level - this.line_width/2, end-start, this.line_width);
+        let repeat_box = new Path2D();
+
+        repeat_box.rect(start, draw_level - this.line_width/2, end-start, this.line_width);
         ctx.fill(repeat_box);
 
         clickable_objects.push({
             "path": repeat_box,
-            "tooltip_info": [this.family]
+            "tooltip_info": [this.family, `start: ${this.start}`, `end: ${this.end}`]
         });
 
         ctx.fillStyle = "black";
         ctx.font = "20px sans bold";
 
-        ctx.fillText(transcript_label, start+this.transcript_label_offset, draw_level - 20);
+        ctx.fillText(this.family, start, draw_level - 20);
         return clickable_objects;
     }
 }
@@ -364,6 +370,14 @@ class Browser {
         this.last_track_refresh = Date.now();
     }
 
+    stack_transcripts() {
+        for (let transcript of this.transcripts) {
+            if ()
+
+        }
+
+    }
+
     refresh_canvas() {
         
         let ctx = this.canvas.getContext("2d");
@@ -407,9 +421,10 @@ class Browser {
         this.draw_axis();
 
         let gene_set_selected = this.get_selected_gene_sets();
+        console.log(transcripts_to_draw);
 
         for (let transcript of transcripts_to_draw) {
-            if (!gene_set_selected[transcript.gene_set]) continue;
+            //if (!gene_set_selected[transcript.gene_set]) continue;
             let clickable_objects = transcript.draw(this, level);
             this.on_screen_objects = this.on_screen_objects.concat(clickable_objects);
             level += 100;
