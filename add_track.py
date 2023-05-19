@@ -88,7 +88,7 @@ if __name__ == "__main__":
             next(file) #throw away header lines
             next(file)
             next(file)
-            query_data = {}
+            query_data = []
             for line in file:
                 score, div, deletion, insertion, chromosome, start, end, left, strand, repeat_family, repeat_class, sub_start, sub_end, left2, repeat_id  = line.split()
 
@@ -100,9 +100,9 @@ if __name__ == "__main__":
                 else:
                     seen_ids[repeat_prefix] = 1
 
-                query_data[(
-                        idb.Attribute("transcript_id"), args.gene_set, args.genome, int(repeat_id), seen_ids[repeat_prefix], 
 
+                query_data.append((
+                        idb.Attribute("transcript_id"), args.gene_set, args.genome, int(repeat_id), seen_ids[repeat_prefix],
                         idb.Attribute("gene_set"), args.gene_set,
                         idb.Attribute("genome"), args.genome,
                         idb.Attribute("chromosome"), chromosome,
@@ -111,14 +111,15 @@ if __name__ == "__main__":
                         idb.Attribute("end"), int(end),
                         idb.Attribute("transcript_type"), "repeat",
                         idb.Attribute("gene"), repeat_class
-                )] = None
+                ))
 
                 if len(query_data) >= 10000:
+                    print(query_data)
                     success, response, response_content_type = server.execute_query(
                         prefix=[INTERFACE, "set_transcripts"],
-                        data = query_data,
-                        verbose=False
+                        data = query_data
                     )
                     num_uploaded += len(query_data)
                     query_data.clear()
                     print("Uploaded", num_uploaded)
+                    break

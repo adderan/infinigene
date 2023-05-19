@@ -17,6 +17,15 @@ class SequenceElement {
         this.strand = strand;
 
         this.track_height = 100;
+
+        this.transcript_label_offset = 0;
+    }
+
+    overlaps(other) {
+        if (this.genome != other.genome) return false;
+        if (this.chromosome != other.chromosome) return false;
+        if (this.end < other.start || this.start > other.end) return false;
+        return true;
     }
     draw(browser, draw_level) {
         let clickable_objects = [];
@@ -50,7 +59,6 @@ class RepeatElement extends SequenceElement {
     }
 
     draw(browser, draw_level) {
-        console.log("Drawing repeat element");
         let clickable_objects = [];
         let start = browser.to_screen_coordinates(this.start);
 
@@ -58,9 +66,6 @@ class RepeatElement extends SequenceElement {
 
         start = Math.max(start, 0);
         end = Math.min(browser.canvas.width, end);
-        console.log(start, end);
-        console.log(browser.canvas.width);
-        console.log(this.family);
 
         let ctx = browser.canvas.getContext("2d");
         ctx.fillStyle = "rgba(1, 0, 0, 0.7)";
@@ -99,7 +104,6 @@ class GeneElement extends SequenceElement {
 
         this.box_height = 50;
         this.line_width = 6;
-        this.transcript_label_offset = 40;
 
 
     }
@@ -171,6 +175,8 @@ class Browser {
         this.axis_thickness = 2;
         this.axis_tick_height = 16;
 
+        this.level_size = 100;
+
         
         this.on_screen_objects = [];
 
@@ -185,6 +191,7 @@ class Browser {
         this.active_gene_set_boxes = {};
 
         this.transcript_scope = 1.0; //distance in canvas widths to keep offscreen transcripts
+
     }
 
     handleEvent(event) {
@@ -370,13 +377,13 @@ class Browser {
         this.last_track_refresh = Date.now();
     }
 
-    stack_transcripts() {
-        for (let transcript of this.transcripts) {
-            if ()
-
+    transcript_fits_in_level(transcript, level) {
+        for (let other_transcript of level) {
+            if (transcript.overlaps(other_transcript)) return false;
         }
-
+        return true;
     }
+
 
     refresh_canvas() {
         
@@ -386,7 +393,6 @@ class Browser {
         this.get_selected_gene_sets();
 
         this.on_screen_objects = [];
-        let level = 100;
 
         this.canvas.width = window.innerWidth;
 
@@ -416,18 +422,35 @@ class Browser {
             }
             transcripts_to_draw.push(transcript);
         }
-        this.canvas.height = 100 * transcripts_to_draw.length + 100;
 
-        this.draw_axis();
 
         let gene_set_selected = this.get_selected_gene_sets();
-        console.log(transcripts_to_draw);
 
+        let levels = [];
+
+        //assign each transcript to a level in the display
         for (let transcript of transcripts_to_draw) {
             //if (!gene_set_selected[transcript.gene_set]) continue;
-            let clickable_objects = transcript.draw(this, level);
-            this.on_screen_objects = this.on_screen_objects.concat(clickable_objects);
-            level += 100;
+            let found_place = false;
+            for (let l = 0; l < levels.length; l++) {
+                if (this.transcript_fits_in_level(transcript, levels[l])) {
+                    levels[l].push(transcript);
+                    found_place = true;
+                    break;
+                }
+            }
+            if (!found_place) {
+                levels.push([transcript]);
+            }
+        }
+        this.canvas.height = this.level_size * (levels.length+1);
+
+        this.draw_axis();
+        for (let l = 0; l < levels.length; l++) {
+            for (let transcript of levels[l]) {
+                let clickable_objects = transcript.draw(this, l*this.level_size + 100);
+                this.on_screen_objects = this.on_screen_objects.concat(clickable_objects);
+            }
         }
         if (this.current_tooltip != null) {
             this.draw_tooltip(this.current_tooltip[0], this.current_tooltip[1]);
