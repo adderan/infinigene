@@ -85,12 +85,19 @@ if __name__ == "__main__":
         seen_ids = {}
         num_uploaded = 0
         with open(args.repeat_masker_output, "r") as file:
-            next(file) #throw away header lines
+            #throw away header lines
             next(file)
             next(file)
-            query_data = []
+            next(file)
+
+            TRANSCRIPT_ID = idb.Attribute("transcript_id")
+            query_data = {TRANSCRIPT_ID: {args.gene_set: {}}}
+            buffer_size = 0
             for line in file:
                 score, div, deletion, insertion, chromosome, start, end, left, strand, repeat_family, repeat_class, sub_start, sub_end, left2, repeat_id  = line.split()
+
+                if strand == "C":
+                    strand = "-"
 
                 repeat_prefix = (args.gene_set, args.genome, int(repeat_id))
 
@@ -100,9 +107,13 @@ if __name__ == "__main__":
                 else:
                     seen_ids[repeat_prefix] = 1
 
+                repeat_id = idb.underscore_quote(int(repeat_id))
+                repeat_num = idb.underscore_quote(int(seen_ids[repeat_prefix]))
 
-                query_data.append((
-                        idb.Attribute("transcript_id"), args.gene_set, args.genome, int(repeat_id), seen_ids[repeat_prefix],
+                if repeat_id not in query_data[TRANSCRIPT_ID][args.gene_set]:
+                    query_data[TRANSCRIPT_ID][args.gene_set][repeat_id] = {}
+
+                transcript_data = idb.unflatten_from_tuples((
                         idb.Attribute("gene_set"), args.gene_set,
                         idb.Attribute("genome"), args.genome,
                         idb.Attribute("chromosome"), chromosome,
@@ -112,14 +123,16 @@ if __name__ == "__main__":
                         idb.Attribute("transcript_type"), "repeat",
                         idb.Attribute("gene"), repeat_class
                 ))
+                query_data[TRANSCRIPT_ID][args.gene_set][repeat_id][repeat_num] = transcript_data
+                buffer_size += 1
 
-                if len(query_data) >= 10000:
-                    print(query_data)
+                if buffer_size >= 1000:
                     success, response, response_content_type = server.execute_query(
                         prefix=[INTERFACE, "set_transcripts"],
-                        data = query_data
+                        data = query_data,
+                        unflatten = False
                     )
-                    num_uploaded += len(query_data)
-                    query_data.clear()
+                    num_uploaded += buffer_size
+                    query_data[TRANSCRIPT_ID][args.gene_set].clear()
+                    buffer_size = 0
                     print("Uploaded", num_uploaded)
-                    break
