@@ -80,10 +80,10 @@ class RepeatElement extends SequenceElement {
             "tooltip_info": [this.family, `start: ${this.start}`, `end: ${this.end}`]
         });
 
-        ctx.fillStyle = "black";
-        ctx.font = "20px sans bold";
+        //ctx.fillStyle = "black";
+        //ctx.font = "20px sans bold";
+        //ctx.fillText(this.family, start, draw_level - 20);
 
-        ctx.fillText(this.family, start, draw_level - 20);
         return clickable_objects;
     }
 }
