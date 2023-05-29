@@ -1,0 +1,942 @@
+{
+    "com.boilerbay.genomics" : {
+        "count_bases" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "num_bases" : {
+                        "_kind" : "counter",
+                        "_last" : true
+                    },
+                    "out" : {
+                        "_kind" : "response content"
+                    }
+                },
+                "_pattern" : {
+                    "_Genome" : {
+                        "=genome" : {
+                            "_Chromosome" : {
+                                "=chromosome" : {
+                                    "_Position" : {
+                                        "=position" : "=num_bases"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "=in" : {
+                        "_chromosome" : "=chromosome",
+                        "_genome" : "=genome"
+                    }
+                },
+                "_result" : {
+                    "=out" : {
+                        "_num_bases" : "=num_bases"
+                    }
+                }
+            }
+        },
+        "get_gc_content" : {
+            "_query" : {
+                "_Where" : {
+                    "a_chromosome" : {
+                        "_last" : true
+                    },
+                    "a_counter" : {
+                        "_kind" : "counter",
+                        "_last" : true
+                    },
+                    "a_position" : {
+                        "_last" : true
+                    },
+                    "c_chromosome" : {
+                        "_last" : true
+                    },
+                    "c_counter" : {
+                        "_kind" : "counter",
+                        "_last" : true
+                    },
+                    "c_position" : {
+                        "_last" : true
+                    },
+                    "g_chromosome" : {
+                        "_last" : true
+                    },
+                    "g_counter" : {
+                        "_kind" : "counter",
+                        "_last" : true
+                    },
+                    "g_position" : {
+                        "_last" : true
+                    },
+                    "genome" : {
+                        "_last" : true
+                    },
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "out" : {
+                        "_kind" : "response content"
+                    },
+                    "t_chromosome" : {
+                        "_last" : true
+                    },
+                    "t_counter" : {
+                        "_kind" : "counter",
+                        "_last" : true
+                    },
+                    "t_position" : {
+                        "_last" : true
+                    }
+                },
+                "_pattern" : {
+                    "_Genome" : {
+                        "=genome" : {
+                            "_Chromosome" : {
+                                "=a_chromosome" : {
+                                    "_Position" : {
+                                        "=a_position" : {
+                                            "_base" : {
+                                                "A" : "=a_counter"
+                                            }
+                                        }
+                                    }
+                                },
+                                "=c_chromosome" : {
+                                    "_Position" : {
+                                        "=c_position" : {
+                                            "_base" : {
+                                                "C" : "=c_counter"
+                                            }
+                                        }
+                                    }
+                                },
+                                "=g_chromosome" : {
+                                    "_Position" : {
+                                        "=g_position" : {
+                                            "_base" : {
+                                                "G" : "=g_counter"
+                                            }
+                                        }
+                                    }
+                                },
+                                "=t_chromosome" : {
+                                    "_Position" : {
+                                        "=t_position" : {
+                                            "_base" : {
+                                                "T" : "=t_counter"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "=in" : {
+                        "_chromosome" : "=chromosome",
+                        "_end" : "=end",
+                        "_genome" : "=genome",
+                        "_start" : "=start"
+                    }
+                },
+                "_result" : {
+                    "=out" : {
+                        "_a_count" : "=a_counter",
+                        "_c_count" : "=c_counter",
+                        "_g_count" : "=g_counter",
+                        "_t_count" : "=t_counter"
+                    }
+                }
+            }
+        },
+        "get_gc_content_from_index" : {
+            "_query" : {
+                "_Where" : {
+                    "a_count" : {
+                        "_kind" : "counter",
+                        "_last" : true
+                    },
+                    "c_count" : {
+                        "_kind" : "counter",
+                        "_last" : true
+                    },
+                    "g_count" : {
+                        "_kind" : "counter",
+                        "_last" : true
+                    },
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "out" : {
+                        "_kind" : "response content"
+                    },
+                    "t_count" : {
+                        "_kind" : "counter",
+                        "_last" : true
+                    }
+                },
+                "_pattern" : {
+                    "_Base" : {
+                        "A" : {
+                            "_position" : {
+                                "=a_genome" : {
+                                    "=a_chromosome" : {
+                                        "=a_position" : "=a_count"
+                                    }
+                                }
+                            }
+                        },
+                        "C" : {
+                            "_position" : {
+                                "=c_genome" : {
+                                    "=c_chromosome" : {
+                                        "=c_position" : "=c_count"
+                                    }
+                                }
+                            }
+                        },
+                        "G" : {
+                            "_position" : {
+                                "=g_genome" : {
+                                    "=g_chromosome" : {
+                                        "=g_position" : "=g_count"
+                                    }
+                                }
+                            }
+                        },
+                        "T" : {
+                            "_position" : {
+                                "=t_genome" : {
+                                    "=t_chromosome" : {
+                                        "=t_position" : "=t_count"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "_result" : {
+                    "=out" : {
+                        "_a_count" : "=a_count",
+                        "_c_count" : "=c_count",
+                        "_g_count" : "=g_count",
+                        "_t_count" : "=t_count"
+                    }
+                }
+            }
+        },
+        "get_gene_sequence" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "out" : {
+                        "_kind" : "response content"
+                    },
+                    "position" : {
+                        "_from" : "=start",
+                        "_to" : "=end"
+                    }
+                },
+                "_pattern" : {
+                    "_Gene" : {
+                        "=gene_id" : {
+                            "_genome" : "=genome",
+                            "_transcripts" : {
+                                "_Transcript" : {
+                                    "=transcript_id" : {
+                                        "_chromosome" : "=chromosome",
+                                        "_end" : "=end",
+                                        "_start" : "=start",
+                                        "_strand" : "=strand"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "_Genome" : {
+                        "=genome" : {
+                            "_Chromosome" : {
+                                "=chromosome" : {
+                                    "_Position" : {
+                                        "=position" : {
+                                            "_base" : "=base"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "=in" : {
+                        "_gene_id" : "=gene_id"
+                    }
+                },
+                "_result" : {
+                    "=out" : {
+                        "_transcript" : {
+                            "=transcript_id" : {
+                                "=(index)(position-start)" : "=base"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get_gene_simpler" : {
+            "_query" : {
+                "_Where" : {
+                    "gene_info" : {
+                        "_kind" : null,
+                        "_type" : "item"
+                    },
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "out" : {
+                        "_kind" : "response content"
+                    }
+                },
+                "_pattern" : {
+                    "_Gene" : {
+                        "=gene_id" : "=gene_info"
+                    },
+                    "=in" : {
+                        "_gene_id" : "=gene_id"
+                    }
+                },
+                "_result" : {
+                    "=out" : "=gene_info"
+                }
+            }
+        },
+        "get_genes_at_location" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "out" : {
+                        "_kind" : "response content"
+                    },
+                    "position" : {
+                        "_from" : "=start",
+                        "_to" : "=end"
+                    }
+                },
+                "_pattern" : {
+                    "_GeneIndex" : {
+                        "=genome" : {
+                            "_Chromosome" : {
+                                "=chromosome" : {
+                                    "_Position" : {
+                                        "=position" : {
+                                            "_transcripts" : "=transcripts"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "=in" : {
+                        "_chromosome" : "=chromosome",
+                        "_end" : "=end",
+                        "_genome" : "=genome",
+                        "_start" : "=start"
+                    }
+                },
+                "_result" : {
+                    "=out" : {
+                        "_transcripts" : "=transcripts"
+                    }
+                }
+            }
+        },
+        "get_last_position" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "out" : {
+                        "_kind" : "response content"
+                    },
+                    "position" : {
+                        "_last" : true
+                    }
+                },
+                "_pattern" : {
+                    "_Genome" : {
+                        "=genome" : {
+                            "_Chromosome" : {
+                                "=chromosome" : {
+                                    "_Position" : {
+                                        "=position" : {
+                                            "_base" : "=base"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "=in" : {
+                        "_chromosome" : "=chromosome",
+                        "_genome" : "=genome"
+                    }
+                },
+                "_result" : {
+                    "=out" : {
+                        "_last_position" : "=position"
+                    }
+                }
+            }
+        },
+        "get_sequence" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "out" : {
+                        "_kind" : "response content"
+                    },
+                    "position" : {
+                        "_from" : "=start",
+                        "_to" : "=end"
+                    }
+                },
+                "_pattern" : {
+                    "_Genome" : {
+                        "=genome" : {
+                            "_Chromosome" : {
+                                "=chromosome" : {
+                                    "_Position" : {
+                                        "=position" : {
+                                            "_base" : "=base"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "=in" : {
+                        "_chromosome" : "=chromosome",
+                        "_end" : "=end",
+                        "_genome" : "=genome",
+                        "_start" : "=start"
+                    }
+                },
+                "_result" : {
+                    "=out" : {
+                        "=(index)(position-start)" : "=base"
+                    }
+                }
+            }
+        },
+        "get_transcript" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "out" : {
+                        "_kind" : "response content"
+                    },
+                    "transcript_id" : {
+                        "_type" : "tuple"
+                    }
+                },
+                "_pattern" : {
+                    "_Transcript" : {
+                        "=transcript_id" : {
+                            "_chromosome" : "=chromosome",
+                            "_end" : "=end",
+                            "_exons" : {
+                                "_Exon" : {
+                                    "=exon_id" : {
+                                        "_chromosome" : "=exonChromosome",
+                                        "_end" : "=exonEnd",
+                                        "_feature" : "=exonFeature",
+                                        "_start" : "=exonStart",
+                                        "_strand" : "=exonStrand"
+                                    }
+                                }
+                            },
+                            "_gene" : "=gene",
+                            "_gene_set" : "=gene_set",
+                            "_genome" : "=genome",
+                            "_start" : "=start",
+                            "_strand" : "=strand",
+                            "_transcript_type" : "=transcript_type"
+                        }
+                    },
+                    "=in" : {
+                        "_transcript_id" : "=transcript_id"
+                    }
+                },
+                "_result" : {
+                    "=out" : {
+                        "_chromosome" : "=chromosome",
+                        "_end" : "=end",
+                        "_exons" : {
+                            "=exon_id" : {
+                                "=exonChromosome" : {
+                                    "=exonStart" : {
+                                        "=exonEnd" : {
+                                            "=exonStrand" : "=exonFeature"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "_gene" : "=gene",
+                        "_gene_set" : "=gene_set",
+                        "_genome" : "=genome",
+                        "_start" : "=start",
+                        "_strand" : "=strand",
+                        "_transcript_type" : "=transcript_type"
+                    }
+                }
+            }
+        },
+        "get_transcripts_in_gene" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "out" : {
+                        "_kind" : "response content"
+                    }
+                },
+                "_pattern" : {
+                    "_Gene" : {
+                        "=gene" : {
+                            "_transcripts" : "=transcript_id"
+                        }
+                    },
+                    "=in" : {
+                        "_gene" : "=gene"
+                    }
+                },
+                "_result" : {
+                    "=out" : "=transcript_id"
+                }
+            }
+        },
+        "get_transcripts_in_range" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "max_transcript_length" : {
+                        "_equals" : "_100000"
+                    },
+                    "out" : {
+                        "_kind" : "response content"
+                    },
+                    "transcriptEnd" : {
+                        "_from" : "=start",
+                        "_to" : "=end + max_transcript_length"
+                    },
+                    "transcriptStart" : {
+                        "_from" : "=start - max_transcript_length",
+                        "_to" : "=end"
+                    },
+                    "transcript_id" : {
+                        "_type" : "tuple"
+                    }
+                },
+                "_pattern" : {
+                    "_TranscriptCoordinates" : {
+                        "=genome" : {
+                            "=chromosome" : {
+                                "=transcriptStart" : {
+                                    "=transcriptEnd" : {
+                                        "_transcript_id" : "=transcript_id"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "=in" : {
+                        "_chromosome" : "=chromosome",
+                        "_end" : "=end",
+                        "_genome" : "=genome",
+                        "_start" : "=start"
+                    }
+                },
+                "_result" : {
+                    "=out" : "=transcript_id"
+                }
+            }
+        },
+        "make_base_index" : {
+            "_query" : {
+                "_pattern" : {
+                    "_Genome" : {
+                        "=genome" : {
+                            "_Chromosome" : {
+                                "=chromosome" : {
+                                    "_Position" : {
+                                        "=position" : {
+                                            "_base" : "=base"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "_result" : {
+                    "_Base" : {
+                        "=base" : {
+                            "_position" : {
+                                "=genome" : {
+                                    "=chromosome" : "=position"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "make_gene_index" : {
+            "_query" : {
+                "_Where" : {
+                    "transcript_id" : {
+                        "_action" : "union"
+                    }
+                },
+                "_pattern" : {
+                    "_Transcript" : {
+                        "=transcript_id" : {
+                            "_chromosome" : "=chromosome",
+                            "_gene" : "=gene",
+                            "_gene_set" : "=gene_set",
+                            "_genome" : "=genome"
+                        }
+                    }
+                },
+                "_result" : {
+                    "_Gene" : {
+                        "=gene" : {
+                            "_transcripts" : "=transcript_id"
+                        }
+                    }
+                }
+            }
+        },
+        "make_transcript_index" : {
+            "_query" : {
+                "_Where" : {
+                    "transcript_id" : {
+                        "_action" : "union",
+                        "_type" : "tuple"
+                    }
+                },
+                "_pattern" : {
+                    "_Transcript" : {
+                        "=transcript_id" : {
+                            "_chromosome" : "=chromosome",
+                            "_end" : "=end",
+                            "_genome" : "=genome",
+                            "_start" : "=start",
+                            "_strand" : "=strand"
+                        }
+                    }
+                },
+                "_result" : {
+                    "_TranscriptCoordinates" : {
+                        "=genome" : {
+                            "=chromosome" : {
+                                "=start" : {
+                                    "=end" : {
+                                        "_transcript_id" : "=transcript_id"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "set_base" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    }
+                },
+                "_pattern" : {
+                    "=in" : {
+                        "_genome" : {
+                            "=genome" : {
+                                "_chromosome" : {
+                                    "=chromosome" : {
+                                        "_position" : {
+                                            "=position" : {
+                                                "_base" : "=base"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "_result" : {
+                    "_Genome" : {
+                        "=genome" : {
+                            "_Chromosome" : {
+                                "=chromosome" : {
+                                    "_Position" : {
+                                        "=position" : {
+                                            "_base" : "=base"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "set_exon" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    }
+                },
+                "_pattern" : {
+                    "=in" : {
+                        "_chromosome" : "=chromosome",
+                        "_end" : "=end",
+                        "_exon_id" : "=exon_id",
+                        "_exon_number" : "=exon_number",
+                        "_feature" : "=feature",
+                        "_start" : "=start",
+                        "_strand" : "=strand",
+                        "_transcript_id" : "=transcript_id"
+                    }
+                },
+                "_result" : {
+                    "_Transcript" : {
+                        "=transcript_id" : {
+                            "_exons" : {
+                                "_Exon" : {
+                                    "=exon_id" : {
+                                        "_chromosome" : "=chromosome",
+                                        "_end" : "=end",
+                                        "_exon_number" : "=exon_number",
+                                        "_feature" : "=feature",
+                                        "_start" : "=start",
+                                        "_strand" : "=strand"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "set_transcript" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "transcript_id" : {
+                        "_type" : "tuple"
+                    }
+                },
+                "_pattern" : {
+                    "=in" : {
+                        "_chromosome" : "=chromosome",
+                        "_end" : "=end",
+                        "_family" : "=family",
+                        "_gene_id" : "=gene_id",
+                        "_gene_set" : "=gene_set",
+                        "_genome" : "=genome",
+                        "_start" : "=start",
+                        "_strand" : "=strand",
+                        "_transcript_id" : "=transcript_id",
+                        "_type" : "=type"
+                    }
+                },
+                "_result" : {
+                    "_Transcript" : {
+                        "=transcript_id" : {
+                            "_chromosome" : "=chromosome",
+                            "_end" : "=end",
+                            "_family" : "=family",
+                            "_gene" : "=gene_id",
+                            "_gene_set" : "=gene_set",
+                            "_genome" : "=genome",
+                            "_start" : "=start",
+                            "_strand" : "=strand",
+                            "_type" : "=type"
+                        }
+                    }
+                }
+            }
+        },
+        "set_transcripts" : {
+            "_query" : {
+                "_Where" : {
+                    "in" : {
+                        "_kind" : "request content"
+                    },
+                    "transcript_id" : {
+                        "_type" : "tuple"
+                    }
+                },
+                "_pattern" : {
+                    "=in" : {
+                        "_transcript_id" : {
+                            "=transcript_id" : {
+                                "_gene_set" : {
+                                    "=gene_set" : {
+                                        "_genome" : {
+                                            "=genome" : {
+                                                "_chromosome" : {
+                                                    "=chromosome" : {
+                                                        "_strand" : {
+                                                            "=strand" : {
+                                                                "_start" : {
+                                                                    "=start" : {
+                                                                        "_end" : {
+                                                                            "=end" : {
+                                                                                "_transcript_type" : {
+                                                                                    "=transcript_type" : {
+                                                                                        "_gene" : "=gene"
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "_result" : {
+                    "_Transcript" : {
+                        "=transcript_id" : {
+                            "_chromosome" : "=chromosome",
+                            "_end" : "=end",
+                            "_gene" : "=gene",
+                            "_gene_set" : "=gene_set",
+                            "_genome" : "=genome",
+                            "_start" : "=start",
+                            "_strand" : "=strand",
+                            "_transcript_type" : "=transcript_type"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "com.boilerbay.temp" : {
+        "add_gene_type" : {
+            "_query" : {
+                "_Where" : {
+                    "repeat_num" : {
+                        "_action" : "union"
+                    }
+                },
+                "_pattern" : {
+                    "_Transcript" : {
+                        "RepeatMasker" : {
+                            "=genome" : {
+                                "=repeat_id" : "=repeat_num"
+                            }
+                        }
+                    }
+                },
+                "_result" : {
+                    "_Transcript" : {
+                        "RepeatMasker" : {
+                            "=genome" : {
+                                "=repeat_id" : {
+                                    "=repeat_num" : {
+                                        "_gene_type" : "repeat"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "rearrange_gene_table" : {
+            "_query" : {
+                "_pattern" : {
+                    "_Gene" : {
+                        "=gene_id" : {
+                            "_gene_set" : "=gene_set",
+                            "_genome" : "=genome",
+                            "_transcripts" : {
+                                "_Transcript" : {
+                                    "=transcript_id" : {
+                                        "_chromosome" : "=chromosome",
+                                        "_end" : "=end",
+                                        "_exons" : {
+                                            "_Exon" : {
+                                                "=exon_id" : {
+                                                    "_chromosome" : "=exonChromosome",
+                                                    "_end" : "=exonEnd",
+                                                    "_feature" : "=exonFeature",
+                                                    "_start" : "=exonStart",
+                                                    "_strand" : "=exonStrand"
+                                                }
+                                            }
+                                        },
+                                        "_start" : "=start",
+                                        "_strand" : "=strand"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "_result" : {
+                    "_Transcript" : {
+                        "=transcript_id" : {
+                            "_chromosome" : "=chromosome",
+                            "_end" : "=end",
+                            "_exons" : {
+                                "_Exon" : {
+                                    "=exon_id" : {
+                                        "_chromosome" : "=exonChromosome",
+                                        "_end" : "=exonEnd",
+                                        "_feature" : "=exonFeature",
+                                        "_start" : "=exonStart",
+                                        "_strand" : "=exonStrand"
+                                    }
+                                }
+                            },
+                            "_gene" : "=gene_id",
+                            "_gene_set" : "=gene_set",
+                            "_genome" : "=genome",
+                            "_start" : "=start",
+                            "_strand" : "=strand"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
